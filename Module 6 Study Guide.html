@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 6 Study Guide — CompTIA A+ Core 1 (220-1201)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; }
+.container { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 1.25rem; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.badge-green { background: #EAF3DE; color: #3B6D11; }
+.badge-blue { background: #E6F1FB; color: #185FA5; }
+.badge-gray { background: #F1EFE8; color: #5F5E5A; }
+.section-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.12); border-radius: 12px; margin-bottom: 1rem; overflow: hidden; }
+.section-header { padding: 1rem 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.section-header:hover { background: #f9f9f7; }
+.section-body { padding: 0 1.25rem 1.25rem; border-top: 0.5px solid rgba(0,0,0,0.1); display: none; }
+.section-body.open { display: block; }
+.obj-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 0.5px solid rgba(0,0,0,0.07); }
+.obj-row:last-child { border-bottom: none; }
+.check { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; margin-top: 2px; transition: background 0.15s, border-color 0.15s; }
+.check.checked { background: #1D9E75; border-color: #1D9E75; }
+.check.checked::after { content: ''; display: block; width: 5px; height: 9px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translate(-1px, -1px); }
+.progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin: 6px 0 2px; }
+.progress-fill { height: 100%; background: #1D9E75; border-radius: 3px; transition: width 0.3s; }
+.study-h3 { font-size: 15px; font-weight: 500; margin: 1.2rem 0 0.5rem; color: #1a1a1a; }
+.study-h4 { font-size: 12px; font-weight: 500; margin: 1rem 0 0.4rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+.study-p { font-size: 14px; line-height: 1.7; color: #1a1a1a; margin-bottom: 0.6rem; }
+.study-ul { font-size: 14px; line-height: 1.7; padding-left: 1.2rem; margin-bottom: 0.6rem; }
+.study-ul li { margin-bottom: 3px; }
+.key-term { background: #E6F1FB; color: #185FA5; border-radius: 3px; padding: 1px 5px; font-size: 13px; font-weight: 500; }
+.callout { background: #f5f5f3; border-left: 3px solid #1D9E75; border-radius: 0 6px 6px 0; padding: 10px 14px; margin: 10px 0; font-size: 13px; line-height: 1.6; }
+.callout.warn { border-color: #BA7517; }
+.port-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+.port-table th { background: #f5f5f3; padding: 6px 10px; text-align: left; font-weight: 500; border: 0.5px solid rgba(0,0,0,0.12); }
+.port-table td { padding: 5px 10px; border: 0.5px solid rgba(0,0,0,0.12); }
+.port-table tr:nth-child(even) td { background: #fafaf8; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
+.tab { padding: 8px 14px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; color: #666; }
+.tab.active { color: #185FA5; border-bottom-color: #185FA5; font-weight: 500; }
+.view { display: none; }
+.view.active { display: block; }
+.chevron { font-size: 12px; color: #888; transition: transform 0.2s; }
+.chevron.open { transform: rotate(180deg); }
+.overall-card { background: #f5f5f3; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-size: 28px; font-weight: 500; color: #1D9E75; }
+.stat-label { font-size: 12px; color: #888; }
+.progress-label { font-size: 12px; color: #888; }
+@media (max-width: 600px) {
+  .tab { padding: 8px 10px; font-size: 13px; }
+  .port-table { font-size: 12px; }
+  .port-table th, .port-table td { padding: 4px 6px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Module 6 — Study Guide</h1>
+<p class="subtitle">Configuring Network Addressing and Internet Connections &nbsp;·&nbsp; CompTIA A+ Core 1 (220-1201)</p>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('toc')">Objectives</div>
+  <div class="tab" onclick="switchTab('study')">Study Guide</div>
+  <div class="tab" onclick="switchTab('review')">Quick Review</div>
+</div>
+
+<!-- ===================== OBJECTIVES TAB ===================== -->
+<div id="toc" class="view active">
+  <div class="overall-card">
+    <div class="stat">
+      <div class="stat-num" id="checked-count">0</div>
+      <div class="stat-label">Checked off</div>
+    </div>
+    <div style="flex:1; min-width:160px;">
+      <div class="progress-label" id="progress-label">0 of 31 objectives tracked</div>
+      <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" id="overall-progress" style="width:0%"></div></div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:1rem;">Check off objectives as your group masters them. Module 6 covers the following exam domains:</p>
+
+  <!-- 2.1 -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s1')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-green">COVERED</span>
+        <span style="font-size:14px;font-weight:500;">2.1 — TCP/UDP Ports, Protocols &amp; Purposes</span>
+      </div>
+      <span class="chevron open" id="chev-s1">▼</span>
+    </div>
+    <div class="section-body open" id="body-s1">
+      <div style="padding-top:10px;">
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c1')"></div><div><b style="font-size:13px;">Ports 20/21 — FTP</b><br><span style="font-size:12px;color:#888;">File Transfer Protocol, data and control connections</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c2')"></div><div><b style="font-size:13px;">Port 22 — SSH</b><br><span style="font-size:12px;color:#888;">Secure Shell, encrypted CLI access</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c3')"></div><div><b style="font-size:13px;">Port 23 — Telnet</b><br><span style="font-size:12px;color:#888;">Unsecure CLI access</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c4')"></div><div><b style="font-size:13px;">Port 25 — SMTP</b><br><span style="font-size:12px;color:#888;">Simple Mail Transfer Protocol</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c5')"></div><div><b style="font-size:13px;">Port 53 — DNS</b><br><span style="font-size:12px;color:#888;">Domain Name System, TCP and UDP</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c6')"></div><div><b style="font-size:13px;">Ports 67/68 — DHCP</b><br><span style="font-size:12px;color:#888;">Server port 67 / Client port 68, UDP</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c7')"></div><div><b style="font-size:13px;">Port 80/443 — HTTP / HTTPS</b><br><span style="font-size:12px;color:#888;">Web traffic, plain and encrypted</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c8')"></div><div><b style="font-size:13px;">Port 110/143 — POP3 / IMAP</b><br><span style="font-size:12px;color:#888;">Email retrieval protocols</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c9')"></div><div><b style="font-size:13px;">Ports 137-139 — NetBIOS/NetBT</b><br><span style="font-size:12px;color:#888;">Legacy Windows networking</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c10')"></div><div><b style="font-size:13px;">Port 389 — LDAP</b><br><span style="font-size:12px;color:#888;">Lightweight Directory Access Protocol</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c11')"></div><div><b style="font-size:13px;">Port 445 — SMB/CIFS</b><br><span style="font-size:12px;color:#888;">Windows file and printer sharing</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c12')"></div><div><b style="font-size:13px;">Port 3389 — RDP</b><br><span style="font-size:12px;color:#888;">Remote Desktop Protocol</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c13')"></div><div><b style="font-size:13px;">TCP vs. UDP comparison</b><br><span style="font-size:12px;color:#888;">Connection-oriented vs. connectionless, use cases</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.5 -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s2')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-green">COVERED</span>
+        <span style="font-size:14px;font-weight:500;">2.5 — Common Networking Hardware</span>
+      </div>
+      <span class="chevron" id="chev-s2">▼</span>
+    </div>
+    <div class="section-body" id="body-s2">
+      <div style="padding-top:10px;">
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c14')"></div><div><b style="font-size:13px;">Routers (LAN vs. WAN/border)</b><br><span style="font-size:12px;color:#888;">IP-based forwarding, separate broadcast domains</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c15')"></div><div><b style="font-size:13px;">Firewall &amp; ACLs</b><br><span style="font-size:12px;color:#888;">Network access control lists, UTM appliances, personal firewalls</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c16')"></div><div><b style="font-size:13px;">Cable modem / DSL modem / ONT</b><br><span style="font-size:12px;color:#888;">WAN interface hardware, RJ11/RJ45/coax/fiber connections</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.6 -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s3')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-green">COVERED</span>
+        <span style="font-size:14px;font-weight:500;">2.6 — Configure SOHO Networks</span>
+      </div>
+      <span class="chevron" id="chev-s3">▼</span>
+    </div>
+    <div class="section-body" id="body-s3">
+      <div style="padding-top:10px;">
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c17')"></div><div><b style="font-size:13px;">IPv4 addressing, subnet masks, gateways</b><br><span style="font-size:12px;color:#888;">Dotted decimal, slash notation, public/private ranges, APIPA</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c18')"></div><div><b style="font-size:13px;">IPv6 addressing</b><br><span style="font-size:12px;color:#888;">128-bit hex notation, global vs. link-local, dual stack, SLAAC</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c19')"></div><div><b style="font-size:13px;">DHCP static vs. dynamic addressing</b><br><span style="font-size:12px;color:#888;">Leases, reservations, scope, DORA process</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c20')"></div><div><b style="font-size:13px;">SOHO router setup</b><br><span style="font-size:12px;color:#888;">Web management, WAN/LAN config, wizard setup</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.7 -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s4')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-green">COVERED</span>
+        <span style="font-size:14px;font-weight:500;">2.7 — Internet Connection Types</span>
+      </div>
+      <span class="chevron" id="chev-s4">▼</span>
+    </div>
+    <div class="section-body" id="body-s4">
+      <div style="padding-top:10px;">
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c21')"></div><div><b style="font-size:13px;">DSL (ADSL, VDSL) &amp; FTTC</b><br><span style="font-size:12px;color:#888;">Asymmetric vs. symmetric, copper last mile, splitter</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c22')"></div><div><b style="font-size:13px;">Cable (DOCSIS) &amp; HFC</b><br><span style="font-size:12px;color:#888;">F-type coax, CMTS, broadband cable speeds</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c23')"></div><div><b style="font-size:13px;">Fiber (FTTP/FTTH) &amp; ONT</b><br><span style="font-size:12px;color:#888;">Passive optical network, OLT, optical-to-electrical conversion</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c24')"></div><div><b style="font-size:13px;">Satellite (GEO &amp; LEO)</b><br><span style="font-size:12px;color:#888;">VSAT, latency trade-offs, phased array antennas</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c25')"></div><div><b style="font-size:13px;">Cellular (3G / 4G LTE / 5G)</b><br><span style="font-size:12px;color:#888;">Cells, bands, GSM vs. CDMA, mmWave, mMIMO</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c26')"></div><div><b style="font-size:13px;">WISP (Wireless ISP)</b><br><span style="font-size:12px;color:#888;">Fixed-access ground wireless, line-of-sight, interference</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.3 & 2.4 -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s5')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-green">COVERED</span>
+        <span style="font-size:14px;font-weight:500;">2.3 &amp; 2.4 — Network Config Concepts &amp; Hosts</span>
+      </div>
+      <span class="chevron" id="chev-s5">▼</span>
+    </div>
+    <div class="section-body" id="body-s5">
+      <div style="padding-top:10px;">
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c27')"></div><div><b style="font-size:13px;">DNS record types (A, AAAA, CNAME, MX, TXT)</b><br><span style="font-size:12px;color:#888;">Resolution, hierarchy, FQDN, root servers, TLDs</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c28')"></div><div><b style="font-size:13px;">Spam management (SPF, DKIM, DMARC)</b><br><span style="font-size:12px;color:#888;">TXT record-based email authentication</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c29')"></div><div><b style="font-size:13px;">DHCP scope, leases, reservations</b><br><span style="font-size:12px;color:#888;">DORA process, MAC-based reservations, exclusions</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c30')"></div><div><b style="font-size:13px;">VLAN concepts</b><br><span style="font-size:12px;color:#888;">Managed switches, VLAN IDs 2-4094, broadcast domains, inter-VLAN routing</span></div></div>
+        <div class="obj-row"><div class="check" onclick="toggleCheck(this,'c31')"></div><div><b style="font-size:13px;">VPN concepts</b><br><span style="font-size:12px;color:#888;">Encrypted tunnels, remote access, site-to-site</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not covered -->
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('s6')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-gray">NOT IN MOD 6</span>
+        <span style="font-size:14px;font-weight:500;">Other exam objectives (not this module)</span>
+      </div>
+      <span class="chevron" id="chev-s6">▼</span>
+    </div>
+    <div class="section-body" id="body-s6">
+      <p style="font-size:13px;color:#888;padding-top:10px;">These objectives appear on the exam but are covered in other modules:</p>
+      <ul style="font-size:13px;line-height:1.8;padding-left:1.2rem;padding-top:8px;color:#888;">
+        <li>2.2 — Wireless networking technologies (802.11 standards, frequencies, channels, RFID, Bluetooth)</li>
+        <li>2.8 — Networking tools (crimper, cable tester, Wi-Fi analyzer, toner probe, loopback plug, etc.)</li>
+        <li>Switches, access points, patch panels, PoE, NIC details (only briefly touched in this module)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== STUDY GUIDE TAB ===================== -->
+<div id="study" class="view">
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('sg1')">
+      <span style="font-size:14px;font-weight:500;">Part 1 — Internet Connection Types &amp; Hardware</span>
+      <span class="chevron open" id="chev-sg1">▼</span>
+    </div>
+    <div class="section-body open" id="body-sg1">
+      <div style="padding-top:12px;">
+        <div class="study-h3">How the Internet is structured</div>
+        <p class="study-p">The Internet backbone uses high-bandwidth fiber links connecting <span class="key-term">Internet Exchange Points (IXPs)</span>. ISPs connect their networks at IXPs via transit and peering arrangements. Customers connect through the ISP's nearest <span class="key-term">Point of Presence (PoP)</span>, typically a local telephone exchange.</p>
+        <div class="callout">The connection between a home/office and the ISP's PoP is the <b>WAN interface</b> — a point-to-point link. A <b>digital modem</b> establishes this physical connection, while a <b>router</b> handles IP forwarding between networks.</div>
+
+        <div class="study-h3">DSL (Digital Subscriber Line)</div>
+        <p class="study-p">Uses higher frequencies on existing copper telephone lines (the <span class="key-term">PSTN / "last mile"</span>).</p>
+        <ul class="study-ul">
+          <li><b>ADSL</b> — Asymmetric. Fast downlink (up to ~24 Mbps), slow uplink (1.4–3.3 Mbps). Common in homes.</li>
+          <li><b>SDSL</b> — Symmetric. Same uplink and downlink. Better for businesses.</li>
+          <li><b>VDSL/VDSL2</b> — Used with FTTC. Faster but shorter range. Over 300m: 52 Mbps down / 16 Mbps up asymmetric; 26 Mbps both ways symmetric. VDSL2Vplus: 300 Mbps down / 100 Mbps up at 250m.</li>
+        </ul>
+        <div class="callout warn">DSL modems are NOT interchangeable. An ADSL modem likely won't support VDSL. A splitter (filter) separates voice and data signals at each phone socket. Connections: RJ11 → phone line; RJ45 → router.</div>
+
+        <div class="study-h3">Cable (DOCSIS)</div>
+        <p class="study-p">Available through cable TV (CATV) service. Network is <span class="key-term">Hybrid Fiber Coax (HFC)</span> — fiber core with coaxial last mile. Uses <span class="key-term">F-type threaded connectors</span> (do not overtighten). DOCSIS supports up to 42.88 Mbps down / 30.72 Mbps up. DOCSIS 4 supports up to 10 Gbps down / 6 Gbps up.</p>
+        <p class="study-p">The <span class="key-term">CMTS</span> (Cable Modem Termination System) aggregates traffic from premises and forwards it via fiber backbone to the ISP.</p>
+
+        <div class="study-h3">Fiber (FTTP / FTTH)</div>
+        <p class="study-p">Fiber all the way to the premises. Implemented as a <span class="key-term">Passive Optical Network (PON)</span>. An <span class="key-term">OLT</span> (Optical Line Terminal) sends light through a splitter to each subscriber's <span class="key-term">ONT</span> (Optical Network Terminal). The ONT converts optical to electrical signal and connects to the router via RJ45.</p>
+
+        <div class="study-h3">Satellite</div>
+        <ul class="study-ul">
+          <li><b>GEO (Geostationary)</b> — High orbit, wide coverage, but high latency (600–800 ms RTT vs. 10–20 ms for DSL). Typical speeds: 2–6 Mbps up / 30 Mbps down. Uses VSAT dish (pointed south in northern hemisphere) and DVB-S modem.</li>
+          <li><b>LEO (Low Earth Orbit)</b> — Lower latency (25–60 ms RTT), better bandwidth (5–220+ Mbps). Satellites move, so antennas use phased array technology to track them. Flat panel antennas used by newer providers.</li>
+        </ul>
+        <div class="callout warn">RTT = Round Trip Time — two-way latency (probe sent + response received). GEO's high latency makes it unsuitable for real-time apps (VoIP, gaming, video calls).</div>
+
+        <div class="study-h3">WISP (Wireless ISP)</div>
+        <p class="study-p">Ground-based fixed wireless. Directional antenna bridges customer and provider. Lower latency than satellite but requires unobstructed <b>line of sight</b>. Unlicensed bands risk interference. Affected by weather and solar flares.</p>
+
+        <div class="study-h3">Cellular (3G / 4G / 5G)</div>
+        <table class="port-table">
+          <tr><th>Gen</th><th>Standard</th><th>Speed</th><th>Notes</th></tr>
+          <tr><td>3G</td><td>UMTS (GSM) / EVDO (CDMA)</td><td>~3 Mbps</td><td>GSM uses SIM cards; CDMA does not</td></tr>
+          <tr><td>3G+</td><td>HSPA+</td><td>up to 42 Mbps</td><td>Improved GSM data rates</td></tr>
+          <tr><td>4G</td><td>LTE (converged standard)</td><td>Varies</td><td>All LTE requires a SIM card</td></tr>
+          <tr><td>5G</td><td>Sub-6 GHz + mmWave</td><td>Gbps range</td><td>Uses mMIMO / beamforming; mmWave can't penetrate walls</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('sg2')">
+      <span style="font-size:14px;font-weight:500;">Part 2 — TCP/IP Suite &amp; Addressing</span>
+      <span class="chevron" id="chev-sg2">▼</span>
+    </div>
+    <div class="section-body" id="body-sg2">
+      <div style="padding-top:12px;">
+        <div class="study-h3">The 4-Layer TCP/IP Model</div>
+        <table class="port-table">
+          <tr><th>Layer</th><th>Function</th><th>Examples</th></tr>
+          <tr><td>Application</td><td>High-level protocols and services</td><td>HTTP, HTTPS, DNS, SMTP, FTP, SSH</td></tr>
+          <tr><td>Transport</td><td>Port numbers, reliability</td><td>TCP, UDP</td></tr>
+          <tr><td>Internet</td><td>Logical addressing and routing</td><td>IP, ARP</td></tr>
+          <tr><td>Link / Network Interface</td><td>Physical transmission, MAC addressing</td><td>Ethernet, Wi-Fi, DSL modem</td></tr>
+        </table>
+        <div class="callout">Lower layers <b>encapsulate</b> data from upper layers, adding headers. A router operates at the Internet layer; a switch operates at the Link layer.</div>
+
+        <div class="study-h3">IPv4 Addressing</div>
+        <p class="study-p">A 32-bit address written in dotted decimal notation (4 octets, 0–255 each). Example: <span class="key-term">192.168.0.1</span>. Range: 0.0.0.0 to 255.255.255.255.</p>
+        <p class="study-p">A <span class="key-term">subnet mask</span> (or prefix) identifies the network vs. host portion. Example: /24 = 255.255.255.0. With a /24 mask, the first 3 octets are the network ID and the last octet is the host ID.</p>
+
+        <div class="study-h4">Address Classes &amp; Private Ranges</div>
+        <table class="port-table">
+          <tr><th>Class</th><th>1st Octet</th><th>Default Mask</th><th>Prefix</th><th>Private Range</th></tr>
+          <tr><td>A</td><td>0–127</td><td>255.0.0.0</td><td>/8</td><td>10.0.0.0 – 10.255.255.255</td></tr>
+          <tr><td>B</td><td>128–191</td><td>255.255.0.0</td><td>/16</td><td>172.16.0.0 – 172.31.255.255</td></tr>
+          <tr><td>C</td><td>192–223</td><td>255.255.255.0</td><td>/24</td><td>192.168.0.0 – 192.168.255.255</td></tr>
+          <tr><td>D</td><td>224–239</td><td>—</td><td>—</td><td>Multicast (reserved)</td></tr>
+          <tr><td>E</td><td>240–255</td><td>—</td><td>—</td><td>Experimental (reserved)</td></tr>
+        </table>
+        <div class="callout warn">Private addresses (RFC 1918) cannot route over the public Internet. NAT or a proxy server is required for Internet access from private ranges.</div>
+
+        <div class="study-h4">Key host configuration parameters</div>
+        <ul class="study-ul">
+          <li><b>IP address</b> — Unique within the network. First and last addresses in each subnet are reserved (network ID and broadcast).</li>
+          <li><b>Subnet mask</b> — Distinguishes network portion from host portion.</li>
+          <li><b>Default gateway</b> — Router IP for reaching other networks. Must be in the same subnet as the host.</li>
+          <li><b>DNS server(s)</b> — Resolves names to IPs. Typically the same as gateway on SOHO networks.</li>
+        </ul>
+
+        <div class="study-h3">APIPA (Automatic Private IP Addressing)</div>
+        <p class="study-p">When a host is set to use DHCP but cannot reach a DHCP server, Windows assigns an APIPA address from <span class="key-term">169.254.0.1 – 169.254.255.254</span>. The host can only communicate with other APIPA hosts on the same segment — no Internet access, no gateway routing. Other OS vendors call this "link-local."</p>
+
+        <div class="study-h3">IPv6 Addressing</div>
+        <p class="study-p">128-bit address written in hexadecimal, 8 groups of 16 bits separated by colons. Leading zeros in a group can be dropped; one consecutive run of all-zero groups can be replaced by <span class="key-term">::</span>.</p>
+        <p class="study-p">Example: <span class="key-term">2001:db8::abc:0:def0:1234</span></p>
+        <ul class="study-ul">
+          <li>First 64 bits = network ID; last 64 bits = interface ID. No subnet mask needed.</li>
+          <li><b>Global address</b> — Starts with 2 or 3. Public, Internet-routable.</li>
+          <li><b>Link-local address</b> — Starts with fe80::. Local segment only.</li>
+          <li><b>SLAAC</b> — StateLess Address Auto Configuration. Hosts auto-configure using router advertisements. No default gateway needed.</li>
+          <li><b>Dual stack</b> — Host runs both IPv4 and IPv6 simultaneously. Defaults to IPv6, falls back to IPv4.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('sg3')">
+      <span style="font-size:14px;font-weight:500;">Part 3 — TCP, UDP &amp; Well-Known Ports</span>
+      <span class="chevron" id="chev-sg3">▼</span>
+    </div>
+    <div class="section-body" id="body-sg3">
+      <div style="padding-top:12px;">
+        <div class="study-h3">TCP vs. UDP</div>
+        <table class="port-table">
+          <tr><th>Feature</th><th>TCP</th><th>UDP</th></tr>
+          <tr><td>Connection type</td><td>Connection-oriented</td><td>Connectionless</td></tr>
+          <tr><td>Reliability</td><td>Guaranteed delivery</td><td>Best-effort, no guarantee</td></tr>
+          <tr><td>Sequencing</td><td>Yes — packets numbered</td><td>No</td></tr>
+          <tr><td>Acknowledgment</td><td>Yes — ACK / NACK</td><td>No</td></tr>
+          <tr><td>Speed / Overhead</td><td>Slower, 20+ bytes per packet overhead</td><td>Faster, minimal overhead</td></tr>
+          <tr><td>Use cases</td><td>HTTPS, SSH, FTP, SMTP, RDP, IMAP</td><td>DHCP, DNS, VoIP, video streaming, TFTP</td></tr>
+        </table>
+        <div class="callout">TCP uses a <b>three-way handshake</b>: SYN → SYN/ACK → ACK to establish a connection, and a FIN handshake to terminate gracefully.</div>
+
+        <div class="study-h3">Well-Known Ports — Complete Table</div>
+        <table class="port-table">
+          <tr><th>Port</th><th>Protocol</th><th>TCP/UDP</th><th>Purpose</th></tr>
+          <tr><td>20</td><td>FTP (data)</td><td>TCP</td><td>File transfer data connection</td></tr>
+          <tr><td>21</td><td>FTP (control)</td><td>TCP</td><td>File transfer control commands</td></tr>
+          <tr><td>22</td><td>SSH</td><td>TCP</td><td>Encrypted remote CLI access</td></tr>
+          <tr><td>23</td><td>Telnet</td><td>TCP</td><td>Unsecured remote CLI access</td></tr>
+          <tr><td>25</td><td>SMTP</td><td>TCP</td><td>Email transmission between servers</td></tr>
+          <tr><td>53</td><td>DNS</td><td>TCP/UDP</td><td>Name-to-IP resolution</td></tr>
+          <tr><td>67</td><td>DHCP Server</td><td>UDP</td><td>Provides IP config to clients</td></tr>
+          <tr><td>68</td><td>DHCP Client</td><td>UDP</td><td>Requests IP config from server</td></tr>
+          <tr><td>80</td><td>HTTP</td><td>TCP</td><td>Unencrypted web traffic</td></tr>
+          <tr><td>110</td><td>POP3</td><td>TCP</td><td>Email retrieval (downloads and deletes from server)</td></tr>
+          <tr><td>137–139</td><td>NetBIOS/NetBT</td><td>UDP/TCP</td><td>Legacy Windows networking</td></tr>
+          <tr><td>143</td><td>IMAP</td><td>TCP</td><td>Email retrieval (stays on server)</td></tr>
+          <tr><td>389</td><td>LDAP</td><td>TCP</td><td>Directory services queries</td></tr>
+          <tr><td>443</td><td>HTTPS</td><td>TCP</td><td>Encrypted web traffic</td></tr>
+          <tr><td>445</td><td>SMB/CIFS</td><td>TCP</td><td>Windows file and printer sharing</td></tr>
+          <tr><td>3389</td><td>RDP</td><td>TCP</td><td>Remote graphical desktop access</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('sg4')">
+      <span style="font-size:14px;font-weight:500;">Part 4 — DHCP, DNS, VLANs &amp; VPNs</span>
+      <span class="chevron" id="chev-sg4">▼</span>
+    </div>
+    <div class="section-body" id="body-sg4">
+      <div style="padding-top:12px;">
+        <div class="study-h3">DHCP in depth</div>
+        <p class="study-p">DHCP uses UDP (server port <span class="key-term">67</span>, client port <span class="key-term">68</span>). The DORA process:</p>
+        <ul class="study-ul">
+          <li><b>Discover</b> — Client broadcasts DHCPDISCOVER on the network</li>
+          <li><b>Offer</b> — Server responds with available IP address and configuration</li>
+          <li><b>Request</b> — Client broadcasts acceptance of the offer</li>
+          <li><b>Acknowledge</b> — Server confirms the lease is active</li>
+        </ul>
+        <p class="study-p"><span class="key-term">Scope</span> — The range of IP addresses the server can assign. Must exclude statically assigned addresses (e.g., the router's own LAN IP).</p>
+        <p class="study-p"><span class="key-term">Lease</span> — IP addresses are time-limited. Clients renew leases before expiry. If renewal fails, the client must restart DORA and release the old address.</p>
+        <p class="study-p"><span class="key-term">Reservation</span> — DHCP server assigns a specific IP to a specific MAC address every time. Useful for printers, servers, and network devices that need consistent addresses.</p>
+
+        <div class="study-h3">DNS in depth</div>
+        <p class="study-p">DNS translates <span class="key-term">FQDNs</span> (fully-qualified domain names) to IP addresses. Hierarchy: root (.) → TLD (.com, .org) → domain → subdomain → host. There are 13 root servers labeled A through M. Client-side "stub resolvers" check local cache first, then query the configured DNS server over <span class="key-term">port 53</span>.</p>
+        <div class="study-h4">Record types</div>
+        <table class="port-table">
+          <tr><th>Record</th><th>Purpose</th></tr>
+          <tr><td>A</td><td>Hostname → IPv4 address</td></tr>
+          <tr><td>AAAA</td><td>Hostname → IPv6 address</td></tr>
+          <tr><td>CNAME</td><td>Alias one domain name to another (canonical name)</td></tr>
+          <tr><td>MX</td><td>Identifies email server(s) for the domain; lowest preference value = preferred</td></tr>
+          <tr><td>TXT</td><td>Free-form text; used for SPF, DKIM, DMARC records</td></tr>
+        </table>
+        <div class="study-h4">Email spam management (TXT records)</div>
+        <ul class="study-ul">
+          <li><b>SPF</b> — Lists servers authorized to send email for the domain. Only one SPF record allowed per domain.</li>
+          <li><b>DKIM</b> — Uses a public key (published as a TXT record) to cryptographically sign email and validate the source server.</li>
+          <li><b>DMARC</b> — Enforces SPF and/or DKIM. Specifies what to do on failure (flag, quarantine, reject) and enables reporting back to the sender.</li>
+        </ul>
+
+        <div class="study-h3">VLANs</div>
+        <p class="study-p">A <span class="key-term">VLAN</span> logically divides a physical switch into multiple broadcast domains using VLAN IDs (2–4094) on managed switch ports. VLAN 1 is the default. Hosts in different VLANs cannot communicate directly — they require an IP router. Each VLAN gets its own IP subnet, DHCP scope, and DNS services.</p>
+        <div class="callout">Benefits: reduced broadcast traffic, security segmentation, traffic type isolation (e.g., isolating voice VLAN for QoS prioritization over data VLANs).</div>
+
+        <div class="study-h3">VPNs</div>
+        <p class="study-p">A <span class="key-term">VPN</span> creates an encrypted tunnel over a public network (Internet) so remote hosts can securely access a private LAN. A VPN gateway authenticates users and manages the tunnel. Once connected, the remote host appears to be on the local network, limited only by available Internet bandwidth.</p>
+        <p class="study-p">VPNs can also be used for site-to-site links (branch office to head office) and as additional security within a local network.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== QUICK REVIEW TAB ===================== -->
+<div id="review" class="view">
+  <p style="font-size:13px;color:#666;margin-bottom:1rem;">Key facts your group must know cold for the exam. Use these as flashcard prompts.</p>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('r1')">
+      <span style="font-size:14px;font-weight:500;">Memory anchors — ports</span>
+      <span class="chevron open" id="chev-r1">▼</span>
+    </div>
+    <div class="section-body open" id="body-r1">
+      <div style="padding-top:10px;">
+        <p style="font-size:13px;color:#888;font-style:italic;margin-bottom:10px;">Cover the right column and recall from the prompt:</p>
+        <table class="port-table">
+          <tr><th>Prompt</th><th>Answer</th></tr>
+          <tr><td>FTP uses two ports. Name them.</td><td>20 (data), 21 (control)</td></tr>
+          <tr><td>Secure remote CLI access</td><td>SSH — port 22 — TCP</td></tr>
+          <tr><td>Unsecure remote CLI access</td><td>Telnet — port 23 — TCP</td></tr>
+          <tr><td>Email sending between servers</td><td>SMTP — port 25 — TCP</td></tr>
+          <tr><td>Name resolution port and protocol</td><td>DNS — port 53 — TCP/UDP</td></tr>
+          <tr><td>DHCP server listens on...</td><td>Port 67 (UDP)</td></tr>
+          <tr><td>DHCP client listens on...</td><td>Port 68 (UDP)</td></tr>
+          <tr><td>Unencrypted web</td><td>HTTP — port 80 — TCP</td></tr>
+          <tr><td>Email retrieval, downloads to client</td><td>POP3 — port 110 — TCP</td></tr>
+          <tr><td>Email retrieval, stays on server</td><td>IMAP — port 143 — TCP</td></tr>
+          <tr><td>Directory queries (users/resources)</td><td>LDAP — port 389 — TCP</td></tr>
+          <tr><td>Encrypted web</td><td>HTTPS — port 443 — TCP</td></tr>
+          <tr><td>Windows file sharing</td><td>SMB/CIFS — port 445 — TCP</td></tr>
+          <tr><td>Remote graphical desktop</td><td>RDP — port 3389 — TCP</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('r2')">
+      <span style="font-size:14px;font-weight:500;">Memory anchors — addressing &amp; connections</span>
+      <span class="chevron" id="chev-r2">▼</span>
+    </div>
+    <div class="section-body" id="body-r2">
+      <div style="padding-top:10px;">
+        <table class="port-table">
+          <tr><th>Prompt</th><th>Answer</th></tr>
+          <tr><td>APIPA address range</td><td>169.254.0.1 – 169.254.255.254</td></tr>
+          <tr><td>IPv4 private Class A range</td><td>10.0.0.0 – 10.255.255.255</td></tr>
+          <tr><td>IPv4 private Class B range</td><td>172.16.0.0 – 172.31.255.255</td></tr>
+          <tr><td>IPv4 private Class C range</td><td>192.168.0.0 – 192.168.255.255</td></tr>
+          <tr><td>IPv6 global addresses start with...</td><td>2 or 3</td></tr>
+          <tr><td>IPv6 link-local addresses start with...</td><td>fe80::</td></tr>
+          <tr><td>DHCP process acronym</td><td>DORA (Discover, Offer, Request, Acknowledge)</td></tr>
+          <tr><td>What converts optical to electrical signal?</td><td>ONT (Optical Network Terminal)</td></tr>
+          <tr><td>Satellite internet modem type (GEO)</td><td>DVB-S modem / VSAT dish</td></tr>
+          <tr><td>GEO satellite RTT latency</td><td>600–800 ms</td></tr>
+          <tr><td>LEO satellite RTT latency</td><td>25–60 ms</td></tr>
+          <tr><td>VLAN valid ID range</td><td>2 to 4094 (VLAN 1 is default)</td></tr>
+          <tr><td>TCP vs UDP: which is faster?</td><td>UDP (connectionless, less overhead)</td></tr>
+          <tr><td>Which protocol must use UDP and why?</td><td>DHCP — uses broadcast; TCP doesn't support broadcast</td></tr>
+          <tr><td>IPv6 auto-configuration process</td><td>SLAAC (StateLess Address Auto Configuration)</td></tr>
+          <tr><td>IPv4 method for private to Internet</td><td>NAT (Network Address Translation) or proxy server</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header" onclick="toggleSection('r3')">
+      <span style="font-size:14px;font-weight:500;">Common exam traps</span>
+      <span class="chevron" id="chev-r3">▼</span>
+    </div>
+    <div class="section-body" id="body-r3">
+      <div style="padding-top:10px;">
+        <ul class="study-ul" style="line-height:2.1;">
+          <li>DNS uses <b>both TCP and UDP</b> on port 53 — do not say just one.</li>
+          <li>DHCP uses UDP, not TCP — broadcast is required and TCP does not support broadcast.</li>
+          <li>APIPA address means the host <b>cannot reach the DHCP server</b> — check the DHCP service first when troubleshooting.</li>
+          <li>An ADSL modem will not support VDSL — DSL modems are NOT interchangeable.</li>
+          <li>The default gateway must be in the <b>same subnet</b> as the host.</li>
+          <li>Hosts in different VLANs cannot communicate without a <b>router</b>, even if connected to the same physical switch.</li>
+          <li>GEO satellite has very high latency — bad for real-time applications (VoIP, gaming, video conferencing).</li>
+          <li>5G mmWave bands are fast but <b>cannot penetrate walls</b> and have very short range.</li>
+          <li>SPF — only <b>one per domain</b>. DKIM uses a public key in DNS. DMARC enforces both and adds reporting.</li>
+          <li>The first and last IP in any subnet are reserved — never assign them to hosts.</li>
+          <li>IPv4 is 32 bits; IPv6 is 128 bits.</li>
+          <li>NAT converts private to public addresses at the router. Hosts with private IPs cannot directly access the Internet without NAT.</li>
+          <li>VLAN 1 is the <b>default VLAN</b> on managed switches — custom VLANs use IDs 2–4094.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+var checks = {};
+var totalChecks = 31;
+
+function toggleSection(id) {
+  var body = document.getElementById('body-' + id);
+  var chev = document.getElementById('chev-' + id);
+  if (!body) return;
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+
+function toggleCheck(el, key) {
+  checks[key] = !checks[key];
+  el.classList.toggle('checked', checks[key]);
+  updateProgress();
+}
+
+function updateProgress() {
+  var checked = Object.values(checks).filter(Boolean).length;
+  var el = document.getElementById('checked-count');
+  var bar = document.getElementById('overall-progress');
+  var label = document.getElementById('progress-label');
+  if (el) el.textContent = checked;
+  if (bar) bar.style.width = Math.round(checked / totalChecks * 100) + '%';
+  if (label) label.textContent = checked + ' of ' + totalChecks + ' objectives tracked';
+}
+
+function switchTab(name) {
+  var tabs = document.querySelectorAll('.tab');
+  var names = ['toc', 'study', 'review'];
+  tabs.forEach(function(t, i) { t.classList.toggle('active', names[i] === name); });
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  var v = document.getElementById(name);
+  if (v) v.classList.add('active');
+}
+</script>
+</body>
+</html>
