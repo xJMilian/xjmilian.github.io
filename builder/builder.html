@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Guide Builder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f3;color:#1a1a1a}
+.wrap{max-width:860px;margin:0 auto;padding:2rem 1rem 4rem}
+h1{font-size:22px;font-weight:500;margin-bottom:4px}
+.subtitle{font-size:13px;color:#666;margin-bottom:1.5rem;line-height:1.6}
+label{font-size:13px;color:#555;display:block;margin-bottom:4px}
+input,textarea{width:100%;font-size:13px;font-family:inherit;padding:7px 10px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;background:#fff;color:#1a1a1a;outline:none}
+input:focus,textarea:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,0.12)}
+textarea{resize:vertical;min-height:70px}
+button{font-size:13px;cursor:pointer;font-family:inherit}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.row.full{grid-template-columns:1fr}
+.field{margin-bottom:12px}
+.section-head{font-size:14px;font-weight:500;margin-bottom:4px;padding-bottom:8px;border-bottom:0.5px solid rgba(0,0,0,0.1)}
+.section-note{font-size:12px;color:#888;margin-bottom:12px;line-height:1.6}
+.add-btn{background:transparent;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;padding:7px 12px;color:#555;width:100%;margin-top:4px}
+.add-btn:hover{background:#f5f5f3}
+.del-btn{background:transparent;border:0.5px solid rgba(0,0,0,0.2);border-radius:6px;padding:4px 10px;color:#888;font-size:12px;flex-shrink:0}
+.del-btn:hover{background:#FCEBEB;color:#A32D2D;border-color:#F09595}
+.item-card{background:#f9f9f7;border:0.5px solid rgba(0,0,0,0.1);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.item-label{font-size:12px;font-weight:500;color:#888}
+.export-btn{background:#1D9E75;border:none;border-radius:8px;padding:11px 20px;color:#fff;font-size:14px;font-weight:500;width:100%}
+.export-btn:hover{background:#0F6E56}
+.tab-bar{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.1)}
+.tab{padding:8px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:#666;background:none;border-top:none;border-left:none;border-right:none}
+.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:500}
+.view{display:none}
+.view.active{display:block}
+.badge-sel{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.badge-opt{font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1.5px solid transparent;font-weight:500;user-select:none}
+.badge-opt.selected{border-color:currentColor}
+.hint{font-size:11px;color:#aaa;margin-top:3px;line-height:1.5}
+.new-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:#EAF3DE;color:#3B6D11;font-weight:500;margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Study Guide Builder <span class="new-badge">Edit after export</span></h1>
+<p class="subtitle">Fill in the form, export a standalone HTML guide. The exported file has a floating <b>Edit guide</b> button — click it in your browser to edit any text inline, then save a fresh copy. No code needed, ever.</p>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('info',this)">1. Info</button>
+  <button class="tab" onclick="switchTab('objectives',this)">2. Objectives</button>
+  <button class="tab" onclick="switchTab('study',this)">3. Study content</button>
+  <button class="tab" onclick="switchTab('review',this)">4. Review</button>
+  <button class="tab" onclick="switchTab('export',this)">5. Export</button>
+</div>
+
+<div id="info" class="view active">
+  <div class="card">
+    <div class="section-head">Page info</div>
+    <p class="section-note">Sets the title and tab labels in your exported guide.</p>
+    <div class="row">
+      <div class="field"><label>Module title</label><input id="mod-title" placeholder="e.g. Module 7"></div>
+      <div class="field"><label>Subtitle / course</label><input id="mod-sub" placeholder="e.g. CompTIA A+ Core 1 (220-1201)"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Tab 1 label</label><input id="tab1" value="Objectives"></div>
+      <div class="field"><label>Tab 2 label</label><input id="tab2" value="Study Guide"></div>
+    </div>
+    <div class="row full">
+      <div class="field"><label>Tab 3 label</label><input id="tab3" value="Quick Review"></div>
+    </div>
+  </div>
+</div>
+
+<div id="objectives" class="view">
+  <div class="card">
+    <div class="section-head">Objective sections</div>
+    <p class="section-note">Each section = one exam objective. Each row = one checkbox.<br>Format rows as: <b>Title | Description</b> &nbsp; (one per line, description optional)</p>
+    <div id="obj-sections"></div>
+    <button class="add-btn" onclick="addObjSection()">+ add objective section</button>
+  </div>
+</div>
+
+<div id="study" class="view">
+  <div class="card">
+    <div class="section-head">Study guide parts</div>
+    <p class="section-note">Each part = one collapsible section. Supports basic markdown — see hints.</p>
+    <div id="study-sections"></div>
+    <button class="add-btn" onclick="addStudySection()">+ add study section</button>
+  </div>
+</div>
+
+<div id="review" class="view">
+  <div class="card">
+    <div class="section-head">Quick review tables</div>
+    <p class="section-note">Format rows as: <b>Prompt | Answer</b> &nbsp; (one per line)</p>
+    <div id="review-sections"></div>
+    <button class="add-btn" onclick="addReviewSection()">+ add review table</button>
+  </div>
+  <div class="card">
+    <div class="section-head">Exam traps</div>
+    <p class="section-note">Short gotchas shown as a bulleted list. One trap per field.</p>
+    <div id="trap-items"></div>
+    <button class="add-btn" onclick="addTrap()">+ add exam trap</button>
+  </div>
+</div>
+
+<div id="export" class="view">
+  <div class="card">
+    <div class="section-head">Export your guide</div>
+    <p style="font-size:13px;color:#555;margin-bottom:14px;line-height:1.7;">Downloads a complete standalone HTML file. Open in any browser — works offline and is shareable. A floating <b>Edit guide</b> button lets you update any text and re-save at any time.</p>
+    <button class="export-btn" onclick="doExport()">Download study guide HTML</button>
+    <p style="font-size:11px;color:#aaa;margin-top:10px;text-align:center;">Named after your module title.</p>
+  </div>
+  <div class="card">
+    <div class="section-head">Markdown reference — Study content tab</div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;width:42%;font-family:monospace">## Heading</td><td style="padding:5px 0;color:#888;">Large section heading</td></tr>
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;font-family:monospace">### Sub-heading</td><td style="padding:5px 0;color:#888;">Small caps sub-heading</td></tr>
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;font-family:monospace">- bullet item</td><td style="padding:5px 0;color:#888;">Bullet list item</td></tr>
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;font-family:monospace">**bold text**</td><td style="padding:5px 0;color:#888;">Bold</td></tr>
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;font-family:monospace">`key term`</td><td style="padding:5px 0;color:#888;">Blue highlighted key term</td></tr>
+      <tr style="border-bottom:0.5px solid rgba(0,0,0,0.08)"><td style="padding:5px 0;color:#555;font-family:monospace">&gt; NOTE: text</td><td style="padding:5px 0;color:#888;">Green callout box</td></tr>
+      <tr><td style="padding:5px 0;color:#555;font-family:monospace">&gt; WARN: text</td><td style="padding:5px 0;color:#888;">Orange warning box</td></tr>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script>
+var objSections=[], studySections=[], reviewSections=[], trapItems=[];
+var objCount=0, studyCount=0, reviewCount=0, trapCount=0;
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});
+  btn.classList.add('active');
+  document.getElementById(name).classList.add('active');
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getVal(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+
+function addObjSection(){
+  var id='os'+objCount++;
+  objSections.push(id);
+  var d=document.createElement('div');
+  d.className='item-card';d.id='wrap-'+id;
+  d.innerHTML=
+    '<div class="item-header"><span class="item-label">Objective section</span><button class="del-btn" onclick="removeItem(\''+id+'\',objSections,\'obj-sections\')">remove</button></div>'+
+    '<div class="row">'+
+      '<div class="field"><label>Objective number &amp; title</label><input id="'+id+'-title" placeholder="e.g. 2.1 — TCP/UDP Ports"></div>'+
+      '<div class="field"><label>Badge</label>'+
+        '<div class="badge-sel" id="'+id+'-badge">'+
+          '<span class="badge-opt selected" style="background:#EAF3DE;color:#3B6D11" onclick="selBadge(this,\''+id+'\')">COVERED</span>'+
+          '<span class="badge-opt" style="background:#E6F1FB;color:#185FA5" onclick="selBadge(this,\''+id+'\')">PARTIAL</span>'+
+          '<span class="badge-opt" style="background:#F1EFE8;color:#5F5E5A" onclick="selBadge(this,\''+id+'\')">NOT IN MODULE</span>'+
+          '<span class="badge-opt" style="background:#FCEBEB;color:#A32D2D" onclick="selBadge(this,\''+id+'\')">HIGH PRIORITY</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="field">'+
+      '<label>Checkbox rows</label>'+
+      '<textarea id="'+id+'-rows" placeholder="Port 22 — SSH | Secure Shell, encrypted CLI access&#10;Port 23 — Telnet | Unsecure CLI access"></textarea>'+
+      '<p class="hint">Title | Description &nbsp;&mdash;&nbsp; one row per line. Description is optional.</p>'+
+    '</div>';
+  document.getElementById('obj-sections').appendChild(d);
+}
+
+function selBadge(el,id){
+  document.querySelectorAll('#'+id+'-badge .badge-opt').forEach(function(b){b.classList.remove('selected')});
+  el.classList.add('selected');
+}
+
+function addStudySection(){
+  var id='ss'+studyCount++;
+  studySections.push(id);
+  var d=document.createElement('div');
+  d.className='item-card';d.id='wrap-'+id;
+  d.innerHTML=
+    '<div class="item-header"><span class="item-label">Study section</span><button class="del-btn" onclick="removeItem(\''+id+'\',studySections,\'study-sections\')">remove</button></div>'+
+    '<div class="field"><label>Part title</label><input id="'+id+'-title" placeholder="e.g. Part 1 — Internet Connection Types"></div>'+
+    '<div class="field">'+
+      '<label>Content</label>'+
+      '<textarea id="'+id+'-body" style="min-height:140px" placeholder="## Main heading\n\nParagraph text. Use **bold** and `key term` for highlights.\n\n### Sub-heading\n\n- Bullet one\n- Bullet two\n\n> NOTE: Green tip callout.\n> WARN: Orange warning callout."></textarea>'+
+      '<p class="hint">## heading &nbsp;|&nbsp; ### sub &nbsp;|&nbsp; - bullet &nbsp;|&nbsp; **bold** &nbsp;|&nbsp; `key term` &nbsp;|&nbsp; &gt; NOTE: &nbsp;|&nbsp; &gt; WARN:</p>'+
+    '</div>';
+  document.getElementById('study-sections').appendChild(d);
+}
+
+function addReviewSection(){
+  var id='rs'+reviewCount++;
+  reviewSections.push(id);
+  var d=document.createElement('div');
+  d.className='item-card';d.id='wrap-'+id;
+  d.innerHTML=
+    '<div class="item-header"><span class="item-label">Review table</span><button class="del-btn" onclick="removeItem(\''+id+'\',reviewSections,\'review-sections\')">remove</button></div>'+
+    '<div class="field"><label>Table title</label><input id="'+id+'-title" placeholder="e.g. Memory anchors — ports"></div>'+
+    '<div class="field">'+
+      '<label>Rows</label>'+
+      '<textarea id="'+id+'-rows" placeholder="FTP data port | Port 20 TCP&#10;SSH port | Port 22 TCP&#10;DHCP server port | Port 67 UDP"></textarea>'+
+      '<p class="hint">Prompt | Answer &nbsp;&mdash;&nbsp; one row per line.</p>'+
+    '</div>';
+  document.getElementById('review-sections').appendChild(d);
+}
+
+function addTrap(){
+  var id='trap'+trapCount++;
+  trapItems.push(id);
+  var d=document.createElement('div');
+  d.className='item-card';d.id='wrap-'+id;
+  d.innerHTML=
+    '<div class="item-header"><span class="item-label">Exam trap</span><button class="del-btn" onclick="removeItem(\''+id+'\',trapItems,\'trap-items\')">remove</button></div>'+
+    '<div class="field"><input id="'+id+'-text" placeholder="DNS uses both TCP and UDP on port 53 — do not say just one."></div>';
+  document.getElementById('trap-items').appendChild(d);
+}
+
+function removeItem(id,arr,container){
+  var i=arr.indexOf(id);if(i>-1)arr.splice(i,1);
+  var el=document.getElementById('wrap-'+id);if(el)el.remove();
+}
+
+function mdToHtmlEditable(md){
+  var lines=md.split('\n'),out=[],inList=false;
+  lines.forEach(function(l){
+    if(l.startsWith('## ')){if(inList){out.push('</ul>');inList=false;}out.push('<div class="study-h3 editable">'+esc(l.slice(3))+'</div>');return;}
+    if(l.startsWith('### ')){if(inList){out.push('</ul>');inList=false;}out.push('<div class="study-h4 editable">'+esc(l.slice(4))+'</div>');return;}
+    if(l.startsWith('> WARN: ')){if(inList){out.push('</ul>');inList=false;}out.push('<div class="callout warn editable">'+inlineMd(esc(l.slice(8)))+'</div>');return;}
+    if(l.startsWith('> NOTE: ')||l.startsWith('> ')){if(inList){out.push('</ul>');inList=false;}out.push('<div class="callout editable">'+inlineMd(esc(l.replace(/^> (NOTE: )?/,'')))+'</div>');return;}
+    if(l.startsWith('- ')){if(!inList){out.push('<ul class="study-ul">');inList=true;}out.push('<li class="editable">'+inlineMd(esc(l.slice(2)))+'</li>');return;}
+    if(inList){out.push('</ul>');inList=false;}
+    if(l.trim()===''){return;}
+    out.push('<p class="study-p editable">'+inlineMd(esc(l))+'</p>');
+  });
+  if(inList)out.push('</ul>');
+  return out.join('\n');
+}
+
+function inlineMd(s){
+  s=s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  s=s.replace(/`(.+?)`/g,'<span class="key-term">$1</span>');
+  return s;
+}
+
+function doExport(){
+  var title=getVal('mod-title')||'Study Guide';
+  var subtitle=getVal('mod-sub')||'';
+  var t1=getVal('tab1')||'Objectives';
+  var t2=getVal('tab2')||'Study Guide';
+  var t3=getVal('tab3')||'Quick Review';
+  var fileName=(title.replace(/\s+/g,'_').toLowerCase()||'study_guide')+'_guide.html';
+
+  var totalChecks=0;
+
+  var objHTML='';
+  objSections.forEach(function(id,si){
+    var stitle=getVal(id+'-title')||'Objective '+(si+1);
+    var badgeEl=document.querySelector('#'+id+'-badge .badge-opt.selected');
+    var badgeText=badgeEl?badgeEl.textContent:'COVERED';
+    var badgeMap={'COVERED':'badge-green','PARTIAL':'badge-blue','NOT IN MODULE':'badge-gray','HIGH PRIORITY':'badge-red'};
+    var badgeCls=badgeMap[badgeText]||'badge-green';
+    var rows=getVal(id+'-rows').split('\n').filter(function(r){return r.trim();});
+    var rowsHTML='';
+    rows.forEach(function(r){
+      var parts=r.split('|');
+      var rt=esc((parts[0]||'').trim());
+      var rd=esc((parts[1]||'').trim());
+      totalChecks++;
+      var cid='c'+totalChecks;
+      rowsHTML+=
+        '<div class="obj-row">'+
+          '<div class="check" onclick="toggleCheck(this,\''+cid+'\')"></div>'+
+          '<div>'+
+            '<b style="font-size:13px;" class="editable">'+rt+'</b>'+
+            (rd?'<br><span style="font-size:12px;color:#888;" class="editable">'+rd+'</span>':'')+
+          '</div>'+
+        '</div>';
+    });
+    var sid='s'+(si+1);
+    var first=si===0;
+    objHTML+=
+      '<div class="section-card">'+
+        '<div class="section-header" onclick="toggleSection(\''+sid+'\')">'+
+          '<div style="display:flex;align-items:center;gap:10px;">'+
+            '<span class="badge '+badgeCls+' editable">'+esc(badgeText)+'</span>'+
+            '<span style="font-size:14px;font-weight:500;" class="editable">'+esc(stitle)+'</span>'+
+          '</div>'+
+          '<span class="chevron'+(first?' open':'')+'" id="chev-'+sid+'">&#9660;</span>'+
+        '</div>'+
+        '<div class="section-body'+(first?' open':'')+'" id="body-'+sid+'">'+
+          '<div style="padding-top:10px;">'+rowsHTML+'</div>'+
+        '</div>'+
+      '</div>';
+  });
+
+  var studyHTML='';
+  studySections.forEach(function(id,si){
+    var stitle=getVal(id+'-title')||'Part '+(si+1);
+    var body=mdToHtmlEditable(getVal(id+'-body'));
+    var sid='sg'+(si+1);
+    var first=si===0;
+    studyHTML+=
+      '<div class="section-card">'+
+        '<div class="section-header" onclick="toggleSection(\''+sid+'\')">'+
+          '<span style="font-size:14px;font-weight:500;" class="editable">'+esc(stitle)+'</span>'+
+          '<span class="chevron'+(first?' open':'')+'" id="chev-'+sid+'">&#9660;</span>'+
+        '</div>'+
+        '<div class="section-body'+(first?' open':'')+'" id="body-'+sid+'"><div style="padding-top:12px;">'+body+'</div></div>'+
+      '</div>';
+  });
+
+  var reviewHTML='';
+  reviewSections.forEach(function(id,ri){
+    var rtitle=getVal(id+'-title')||'Review '+(ri+1);
+    var rows=getVal(id+'-rows').split('\n').filter(function(r){return r.trim();});
+    var rowsHTML='';
+    rows.forEach(function(r){
+      var parts=r.split('|');
+      rowsHTML+='<tr><td class="editable">'+esc((parts[0]||'').trim())+'</td><td class="editable">'+esc((parts[1]||'').trim())+'</td></tr>';
+    });
+    var rid='r'+(ri+1);
+    var first=ri===0;
+    reviewHTML+=
+      '<div class="section-card">'+
+        '<div class="section-header" onclick="toggleSection(\''+rid+'\')">'+
+          '<span style="font-size:14px;font-weight:500;" class="editable">'+esc(rtitle)+'</span>'+
+          '<span class="chevron'+(first?' open':'')+'" id="chev-'+rid+'">&#9660;</span>'+
+        '</div>'+
+        '<div class="section-body'+(first?' open':'')+'" id="body-'+rid+'">'+
+          '<div style="padding-top:10px;">'+
+            '<table class="data-table"><tr><th>Prompt</th><th>Answer</th></tr>'+rowsHTML+'</table>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  });
+
+  var trapsHTML='';
+  trapItems.forEach(function(id){
+    var txt=getVal(id+'-text');
+    if(txt)trapsHTML+='<li class="editable">'+esc(txt)+'</li>';
+  });
+  if(trapsHTML){
+    reviewHTML+=
+      '<div class="section-card">'+
+        '<div class="section-header" onclick="toggleSection(\'traps\')">'+
+          '<span style="font-size:14px;font-weight:500;" class="editable">Common exam traps</span>'+
+          '<span class="chevron" id="chev-traps">&#9660;</span>'+
+        '</div>'+
+        '<div class="section-body" id="body-traps">'+
+          '<div style="padding-top:10px;"><ul class="study-ul" style="line-height:2.1;">'+trapsHTML+'</ul></div>'+
+        '</div>'+
+      '</div>';
+  }
+
+  var tc=totalChecks;
+  var fn=fileName;
+
+  var css=
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f3;color:#1a1a1a}'+
+    '.container{max-width:860px;margin:0 auto;padding:2rem 1rem 5rem}'+
+    'h1{font-size:22px;font-weight:500;margin-bottom:4px}'+
+    '.subtitle{font-size:13px;color:#666;margin-bottom:1.25rem}'+
+    '.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}'+
+    '.badge-green{background:#EAF3DE;color:#3B6D11}.badge-blue{background:#E6F1FB;color:#185FA5}.badge-gray{background:#F1EFE8;color:#5F5E5A}.badge-red{background:#FCEBEB;color:#A32D2D}'+
+    '.section-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;margin-bottom:1rem;overflow:hidden}'+
+    '.section-header{padding:1rem 1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none}'+
+    '.section-header:hover{background:#f9f9f7}'+
+    '.section-body{padding:0 1.25rem 1.25rem;border-top:0.5px solid rgba(0,0,0,0.1);display:none}'+
+    '.section-body.open{display:block}'+
+    '.obj-row{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:0.5px solid rgba(0,0,0,0.07)}.obj-row:last-child{border-bottom:none}'+
+    '.check{width:18px;height:18px;border-radius:4px;border:1px solid #ccc;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;margin-top:2px;transition:background 0.15s,border-color 0.15s}'+
+    '.check.checked{background:#1D9E75;border-color:#1D9E75}'+
+    '.check.checked::after{content:"";display:block;width:5px;height:9px;border:2px solid white;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}'+
+    '.progress-bar{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:6px 0 2px}'+
+    '.progress-fill{height:100%;background:#1D9E75;border-radius:3px;transition:width 0.3s}'+
+    '.overall-card{background:#f5f5f3;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}'+
+    '.stat-num{font-size:28px;font-weight:500;color:#1D9E75}.stat-label{font-size:12px;color:#888}.progress-label{font-size:12px;color:#888}'+
+    '.tab-bar{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:1px solid rgba(0,0,0,0.1)}'+
+    '.tab{padding:8px 14px;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:#666}'+
+    '.tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:500}'+
+    '.view{display:none}.view.active{display:block}'+
+    '.chevron{font-size:12px;color:#888;transition:transform 0.2s}.chevron.open{transform:rotate(180deg)}'+
+    '.study-h3{font-size:15px;font-weight:500;margin:1.2rem 0 0.5rem}'+
+    '.study-h4{font-size:12px;font-weight:500;margin:1rem 0 0.4rem;color:#888;text-transform:uppercase;letter-spacing:0.05em}'+
+    '.study-p{font-size:14px;line-height:1.7;margin-bottom:0.6rem}'+
+    '.study-ul{font-size:14px;line-height:1.7;padding-left:1.2rem;margin-bottom:0.6rem}.study-ul li{margin-bottom:3px}'+
+    '.key-term{background:#E6F1FB;color:#185FA5;border-radius:3px;padding:1px 5px;font-size:13px;font-weight:500}'+
+    '.callout{background:#f5f5f3;border-left:3px solid #1D9E75;border-radius:0 6px 6px 0;padding:10px 14px;margin:10px 0;font-size:13px;line-height:1.6}'+
+    '.callout.warn{border-color:#BA7517}'+
+    '.data-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}'+
+    '.data-table th{background:#f5f5f3;padding:6px 10px;text-align:left;font-weight:500;border:0.5px solid rgba(0,0,0,0.12)}'+
+    '.data-table td{padding:5px 10px;border:0.5px solid rgba(0,0,0,0.12)}'+
+    '.data-table tr:nth-child(even) td{background:#fafaf8}'+
+    '.edit-bar{position:fixed;bottom:20px;right:20px;background:#fff;border:0.5px solid rgba(0,0,0,0.18);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.1)}'+
+    '.edit-controls{display:none;align-items:center;gap:8px}'+
+    'body.in-edit-mode .view-controls{display:none}'+
+    'body.in-edit-mode .edit-controls{display:flex}'+
+    '.edit-bar button{font-size:12px;padding:6px 13px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500;border:none}'+
+    '.edit-btn{background:#1D9E75;color:#fff}.edit-btn:hover{background:#0F6E56}'+
+    '.save-btn{background:#185FA5;color:#fff}.save-btn:hover{background:#0C447C}'+
+    '.discard-btn{background:transparent;border:0.5px solid rgba(0,0,0,0.2)!important;color:#555}.discard-btn:hover{background:#f5f5f3}'+
+    '.edit-hint{font-size:11px;color:#888}'+
+    '[contenteditable="true"]{outline:1.5px dashed #378ADD;outline-offset:2px;border-radius:2px;cursor:text;min-width:10px;min-height:1em;display:inline-block}'+
+    'div[contenteditable="true"],li[contenteditable="true"],p[contenteditable="true"]{display:block}'+
+    '[contenteditable="true"]:focus{outline:2px solid #185FA5;background:rgba(24,95,165,0.04)}';
+
+  var viewJs=
+    'var checks={};var TOTAL='+tc+';'+
+    'function toggleSection(id){var b=document.getElementById("body-"+id),c=document.getElementById("chev-"+id);if(!b)return;var o=b.classList.contains("open");b.classList.toggle("open",!o);if(c)c.classList.toggle("open",!o);}'+
+    'function toggleCheck(el,key){if(document.body.classList.contains("in-edit-mode"))return;checks[key]=!checks[key];el.classList.toggle("checked",checks[key]);var n=Object.values(checks).filter(Boolean).length;document.getElementById("checked-count").textContent=n;document.getElementById("overall-progress").style.width=Math.round(n/TOTAL*100)+"%";document.getElementById("progress-label").textContent=n+" of "+TOTAL+" objectives tracked";}'+
+    'function switchTab(name){var names=["toc","study","review"];document.querySelectorAll(".tab").forEach(function(t,i){t.classList.toggle("active",names[i]===name)});document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active")});var v=document.getElementById(name);if(v)v.classList.add("active");}';
+
+  var editJs=
+    'function enterEdit(){document.body.classList.add("in-edit-mode");document.querySelectorAll(".editable").forEach(function(e){e.contentEditable="true";});}'+
+    'function exitEdit(){document.body.classList.remove("in-edit-mode");document.querySelectorAll(".editable").forEach(function(e){e.removeAttribute("contenteditable");});}'+
+    'function saveGuide(){exitEdit();setTimeout(function(){'+
+      'document.querySelectorAll(".check").forEach(function(c){c.classList.remove("checked")});'+
+      'var cc=document.getElementById("checked-count"),op=document.getElementById("overall-progress"),pl=document.getElementById("progress-label");'+
+      'if(cc)cc.textContent="0";if(op)op.style.width="0%";if(pl)pl.textContent="0 of '+tc+' objectives tracked";'+
+      'var html="<!DOCTYPE html>\\n"+document.documentElement.outerHTML;'+
+      'var blob=new Blob([html],{type:"text/html"});'+
+      'var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+fn+'";'+
+      'document.body.appendChild(a);a.click();document.body.removeChild(a);'+
+    '},150);}';
+
+  var editBarHtml=
+    '<div class="edit-bar" id="edit-bar">'+
+      '<div class="view-controls"><button class="edit-btn" onclick="enterEdit()">Edit guide</button></div>'+
+      '<div class="edit-controls">'+
+        '<span class="edit-hint">Click any text to edit</span>'+
+        '<button class="save-btn" onclick="saveGuide()">Save changes</button>'+
+        '<button class="discard-btn" onclick="exitEdit()">Discard</button>'+
+      '</div>'+
+    '</div>';
+
+  var html=
+    '<!DOCTYPE html>\n<html lang="en">\n<head>\n'+
+    '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n'+
+    '<title>'+esc(title)+'</title>\n'+
+    '<style>'+css+'</style>\n'+
+    '</head>\n<body>\n'+
+    editBarHtml+'\n'+
+    '<div class="container">\n'+
+    '<h1 class="editable">'+esc(title)+' \u2014 Study Guide</h1>\n'+
+    '<p class="subtitle editable">'+esc(subtitle)+'</p>\n'+
+    '<div class="tab-bar">'+
+      '<div class="tab active" onclick="switchTab(\'toc\')">'+esc(t1)+'</div>'+
+      '<div class="tab" onclick="switchTab(\'study\')">'+esc(t2)+'</div>'+
+      '<div class="tab" onclick="switchTab(\'review\')">'+esc(t3)+'</div>'+
+    '</div>\n'+
+    '<div id="toc" class="view active">\n'+
+      '<div class="overall-card">'+
+        '<div><div class="stat-num" id="checked-count">0</div><div class="stat-label">Checked off</div></div>'+
+        '<div style="flex:1;min-width:160px;">'+
+          '<div class="progress-label" id="progress-label">0 of '+tc+' objectives tracked</div>'+
+          '<div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" id="overall-progress" style="width:0%"></div></div>'+
+        '</div>'+
+      '</div>\n'+
+      objHTML+'\n'+
+    '</div>\n'+
+    '<div id="study" class="view">\n'+studyHTML+'\n</div>\n'+
+    '<div id="review" class="view">\n'+reviewHTML+'\n</div>\n'+
+    '</div>\n'+
+    '<scr'+'ipt>'+viewJs+editJs+'<\/script>\n'+
+    '</body>\n</html>';
+
+  var blob=new Blob([html],{type:'text/html'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=fileName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+addObjSection();
+addStudySection();
+addReviewSection();
+addTrap();
+</script>
+</body>
+</html>
