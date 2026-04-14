@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Email Journey Simulator</title>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: auto;
+  }
+
+  .controls {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+  }
+
+  button, select {
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: #64748b;
+    transition: 0.2s;color: white;
+  }
+
+  button:hover { background: #7dd3fc; color: black; }
+  .btn-reset { background: #64748b; color: white; }
+  button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
+
+  .log {
+    text-align: left;
+    background: #020617;
+    padding: 15px;
+    height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+
+  .log-time { color: #64748b; margin-right: 10px; }
+  .highlight { color: #38bdf8; font-weight: bold; }
+  .fail { color: #ef4444; font-weight: bold; }
+  .pass { color: #22c55e; font-weight: bold; }
+
+  /* MAP */
+  .map {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: #020617;
+    padding: 60px 30px 20px 30px; 
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 1px solid #1e293b;
+  }
+
+  .node {
+    position: relative;
+    padding: 10px 5px;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    width: 110px;
+    z-index: 10;
+    transition: 0.5s;
+    font-size: 12px;
+  }
+
+  .node-ip {
+    display: block;
+    font-family: monospace;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  /* KEY STORAGE STYLING */
+  .vault {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #334155;
+    border: 1px dashed #64748b;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    opacity: 0; /* Hidden until generated */
+    transition: opacity 0.5s;
+  }
+
+  .key-icon { font-size: 14px; margin-right: 4px; vertical-align: middle; }
+  .private-key { color: #f87171; border-color: #f87171; }
+  .public-key { color: #4ade80; border-color: #4ade80; }
+
+  .active {
+    border-color: #38bdf8;
+    background: #0f172a;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  }
+
+  .email {
+    position: absolute;
+    font-size: 24px;
+    transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+  }
+
+  #flow-active {
+    position: absolute;
+    height: 4px;
+    background: #38bdf8;
+    z-index: 2;
+    width: 0;
+    transition: width 0.8s ease, opacity 0.4s;
+    box-shadow: 0 0 10px #38bdf8;
+    pointer-events: none;
+  }
+
+  .dns-pulse {
+    position: absolute;
+    height: 3px;
+    border-top: 3px dashed #eab308;
+    z-index: 2;
+    width: 0;
+    pointer-events: none;
+  }
+
+  .key-pulse {
+    position: absolute;
+    width: 2px;
+    background: #f472b6;
+    z-index: 1;
+    height: 0;
+    left: 50%;
+    transition: height 0.5s ease, top 0.5s ease;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Email Journey Simulator</h1>
+
+  <div class="controls">
+    <label>Scenario:</label>
+    <select id="mode" onchange="resetSim()">
+      <option value="normal">✅ Standard Flow</option>
+      <option value="spf_fail">❌ SPF Violation</option>
+      <option value="dkim_fail">❌ DKIM Tamper</option>
+    </select>
+    <button class="btn-reset" onclick="resetSim()">Reset</button>
+    <button id="nextBtn" onclick="next()">Step Forward →</button>
+  </div>
+
+  <div class="map" id="map">
+    <div class="email" id="email">✉️</div>
+    <div id="flow-active"></div>
+    <div id="dns-pulse" class="dns-pulse"></div>
+    <div id="key-pulse" class="key-pulse"></div>
+
+    <div class="node" id="client">💻 Client<span class="node-ip">192.168.1.50</span></div>
+    
+    <div class="node" id="send">
+      <div class="vault private-key" id="v-priv"><span class="key-icon">🔑</span>Private Key</div>
+      📤 Sender MUA<span class="node-ip">203.0.113.10</span>
+    </div>
+
+    <div class="node" id="dns">
+      <div class="vault public-key" id="v-pub"><span class="key-icon">🔓</span>Public Key</div>
+      🌍 Public DNS<span class="node-ip">8.8.8.8</span>
+    </div>
+
+    <div class="node" id="internet">☁️ Internet<span class="node-ip">Backbone</span></div>
+
+    <div class="node" id="receive">📥 Receiver MTA<span class="node-ip">198.51.100.25</span></div>
+  </div>
+
+  <div class="log" id="log">
+    <div style="color:#94a3b8">Ready. Click Step Forward to generate cryptographic keys.</div>
+  </div>
+</div>
+
+<script>
+let step = 0;
+
+function log(msg, type = '') {
+  const box = document.getElementById("log");
+  const time = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
+  const div = document.createElement("div");
+  div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${type}">${msg}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function moveEmail(nodeId) {
+  const email = document.getElementById("email");
+  const node = document.getElementById(nodeId);
+  const mapRect = document.getElementById("map").getBoundingClientRect();
+  const nodeRect = node.getBoundingClientRect();
+  
+  email.style.opacity = "1";
+  email.style.left = (nodeRect.left - mapRect.left + nodeRect.width/2 - 12) + "px";
+  email.style.top = (nodeRect.top - mapRect.top - 35) + "px";
+}
+
+function clearAnimations() {
+  document.getElementById("flow-active").style.opacity = "0";
+  document.getElementById("dns-pulse").style.opacity = "0";
+  document.getElementById("key-pulse").style.height = "0";
+}
+
+function animateLine(fromId, toId) {
+  clearAnimations();
+  const from = document.getElementById(fromId).getBoundingClientRect();
+  const to = document.getElementById(toId).getBoundingClientRect();
+  const map = document.getElementById("map").getBoundingClientRect();
+  const line = document.getElementById("flow-active");
+  
+  const startX = from.left - map.left + from.width/2;
+  const endX = to.left - map.left + to.width/2;
+  
+  line.style.transition = "none";
+  line.style.opacity = "1";
+  line.style.left = startX + "px";
+  line.style.width = "0px";
+  line.style.top = (from.top - map.top + from.height/2) + "px";
+  
+  setTimeout(() => {
+    line.style.transition = "width 0.8s ease, opacity 0.4s";
+    line.style.width = Math.abs(endX - startX) + "px";
+    if (endX < startX) line.style.left = endX + "px";
+  }, 50);
+}
+
+function animateKeyFetch(nodeId) {
+  clearAnimations();
+  const node = document.getElementById(nodeId).getBoundingClientRect();
+  const map = document.getElementById("map").getBoundingClientRect();
+  const pulse = document.getElementById("key-pulse");
+  
+  const centerX = node.left - map.left + node.width/2;
+  const nodeTop = node.top - map.top;
+  
+  pulse.style.transition = "none";
+  pulse.style.left = centerX + "px";
+  pulse.style.top = nodeTop + "px";
+  pulse.style.height = "0px";
+
+  setTimeout(() => {
+    pulse.style.transition = "all 0.4s ease";
+    pulse.style.top = (nodeTop - 40) + "px";
+    pulse.style.height = "40px";
+  }, 50);
+
+  setTimeout(() => {
+    pulse.style.height = "0px";
+    pulse.style.top = nodeTop + "px";
+  }, 600);
+}
+
+function animateDNSRoundTripReverse(fromId, toId) {
+  clearAnimations();
+  const fromNode = document.getElementById(fromId).getBoundingClientRect();
+  const toNode = document.getElementById(toId).getBoundingClientRect();
+  const map = document.getElementById("map").getBoundingClientRect();
+  const pulse = document.getElementById("dns-pulse");
+
+  const startX = fromNode.left - map.left + fromNode.width / 2;
+  const endX = toNode.left - map.left + toNode.width / 2;
+  const top = fromNode.top - map.top + fromNode.height / 2;
+
+  pulse.style.transition = "none";
+  pulse.style.opacity = "1";
+  pulse.style.top = top + "px";
+  pulse.style.left = startX + "px";
+  pulse.style.width = "0px";
+
+  setTimeout(() => {
+    pulse.style.transition = "all 0.7s ease";
+    if (endX > startX) {
+      pulse.style.width = (endX - startX) + "px";
+    } else {
+      pulse.style.left = endX + "px";
+      pulse.style.width = (startX - endX) + "px";
+    }
+  }, 50);
+
+  setTimeout(() => {
+    pulse.style.transition = "all 0.7s ease";
+    if (endX > startX) {
+      pulse.style.left = endX - "px";
+      pulse.style.width = "0px";
+    } else {
+      pulse.style.left = startX - "px";
+      pulse.style.width = "0px";
+    }
+    log("DNS Response received.", "info");
+  }, 1000);
+}
+
+function animateDNSRoundTrip(fromId, toId) {
+  clearAnimations();
+  const fromNode = document.getElementById(fromId).getBoundingClientRect();
+  const toNode = document.getElementById(toId).getBoundingClientRect();
+  const map = document.getElementById("map").getBoundingClientRect();
+  const pulse = document.getElementById("dns-pulse");
+
+  const startX = fromNode.left - map.left + fromNode.width / 2;
+  const endX = toNode.left - map.left + toNode.width / 2;
+  const top = fromNode.top - map.top + fromNode.height / 2;
+
+  pulse.style.transition = "none";
+  pulse.style.opacity = "1";
+  pulse.style.top = top + "px";
+  pulse.style.left = startX + "px";
+  pulse.style.width = "0px";
+
+  setTimeout(() => {
+    pulse.style.transition = "all 0.8s ease";
+    if (endX > startX) { pulse.style.width = (endX - startX) + "px"; } 
+    else { pulse.style.left = endX + "px"; pulse.style.width = (startX - endX) + "px"; }
+  }, 50);
+
+  setTimeout(() => {
+    pulse.style.transition = "all 0.8s ease";
+    if (endX > startX) { pulse.style.left = endX + "px"; pulse.style.width = "0px"; } 
+    else { pulse.style.left = startX + "px"; pulse.style.width = "0px"; }
+    log("DNS data received.", "info");
+  }, 1000);
+}
+
+function highlightNode(id) {
+  document.querySelectorAll(".node").forEach(n => n.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function resetSim() {
+  step = 0;
+  document.getElementById("log").innerHTML = '<div style="color:#94a3b8">Simulation reset.</div>';
+  document.getElementById("email").style.opacity = "0";
+  document.getElementById("v-priv").style.opacity = "0";
+  document.getElementById("v-pub").style.opacity = "0";
+  document.querySelectorAll(".node").forEach(n => n.classList.remove("active"));
+  document.getElementById("nextBtn").disabled = false;
+  clearAnimations();
+}
+
+function next() {
+  step++;
+  const mode = document.getElementById("mode").value;
+
+  switch(step) {
+    case 1:
+      highlightNode("send");
+      log("PROVISIONING: Sender generating RSA Key Pair...", "highlight");
+      setTimeout(() => {
+          document.getElementById("v-priv").style.opacity = "1";
+          log("Private Key stored securely in Sender MTA vault.", "pass");
+          animateLine("send", "dns");
+          setTimeout(() => {
+              document.getElementById("v-pub").style.opacity = "1";
+              log("Public Key published to DNS as TXT record.", "pass");
+          }, 800);
+      }, 500);
+      break;
+    case 2:
+      highlightNode("client");
+      moveEmail("client");
+      log("Email composed. Submitting to Outbound Mail Server...");
+      break;
+    case 3:
+      animateLine("client", "send");
+      highlightNode("send");
+      moveEmail("send");
+      log("Sender MTA: Accessing local vault for Private Key.");
+      animateKeyFetch("send");
+      break;
+    case 4:
+      log("DKIM: Hashing body and signing with Private Key.");
+      highlightNode("send");
+      break;
+    case 5:
+      animateDNSRoundTripReverse("send", "dns");
+      highlightNode("dns");
+      log("Sender: Fetching MX records to find destination.");
+      break;
+    case 6:
+      animateLine("send", "internet");
+      highlightNode("internet");
+      moveEmail("internet");
+      log("Routing through the Internet.");
+      break;
+    case 7:
+      animateLine("internet", "receive");
+      highlightNode("receive");
+      moveEmail("receive");
+      log("Receiver MTA: Accepting connection from 203.0.113.10.");
+      break;
+    case 8:
+      animateDNSRoundTrip("receive", "dns");
+      highlightNode("dns");
+      log("Receiver: Fetching SPF and DKIM records from DNS.");
+      break;
+    case 9:
+      highlightNode("receive");
+      // Explicit SPF Check
+      if (mode === "spf_fail") {
+        log("SPF CHECK: FAIL - IP 203.0.113.10 not in authorized list.", "fail");
+      } else {
+        log("SPF CHECK: PASS - IP is authorized for this domain.", "pass");
+      }
+      break;
+    case 10:
+      highlightNode("receive");
+      moveEmail("receive");
+      log("DKIM: Verifying signature using fetched Public Key.");
+      if (mode === "dkim_fail") {
+        log("DKIM Result: FAIL (Key/Signature mismatch)", "fail");
+      } else {
+        log("DKIM Result: PASS", "pass");
+      }
+      break;
+    case 11:
+      if (mode === "normal") {
+        log("FINAL: Message Delivered to Inbox.", "pass");
+      } else {
+        log("FINAL: Message Blocked/Quarantined by DMARC Policy.", "fail");
+      }
+      log("Simulation End.", "highlight");
+      document.getElementById("nextBtn").disabled = true;
+      break;
+  }
+}
+</script>
+
+</body>
+</html>
