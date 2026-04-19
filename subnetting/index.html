@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Packet Tracer</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #060a12;
+    --surface:  #090e1a;
+    --border:   #142036;
+    --cyan:     #00d4ff;
+    --green:    #00ff88;
+    --gold:     #ffc740;
+    --purple:   #9b6dff;
+    --red:      #ff4a6e;
+    --text:     #7a9dbe;
+    --muted:    #2e4a68;
+    --cable:    #172840;
+    --a-color:  #7878ff;
+    --b-color:  #00aaff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 212, 255, 0.015) 2px,
+      rgba(0, 212, 255, 0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  header {
+    width: 100%;
+    max-width: 960px;
+    padding: 18px 20px 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: var(--cyan);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  header .subtitle {
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  #diagram-wrap {
+    width: 100%;
+    max-width: 960px;
+    padding: 10px 10px 0;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  /* SVG device hover/select styles */
+  .device-node { cursor: pointer; }
+  .device-node .dev-body { transition: stroke 0.15s; }
+  .device-node:hover .dev-body { stroke: rgba(150,150,255,0.7); stroke-width: 2; }
+  .device-node.selected .dev-body { stroke: var(--cyan) !important; stroke-width: 2.5 !important; }
+  .device-node.selected .dev-header { fill: #0a2540 !important; }
+
+  /* Log section */
+  #log-section {
+    width: 100%;
+    max-width: 960px;
+    padding: 10px 10px 24px;
+  }
+
+  .log-header {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    padding-left: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .log-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  #log {
+    background: #040710;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    height: 155px;
+    overflow-y: auto;
+    font-size: 0.7rem;
+    line-height: 1.75;
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
+  }
+
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-track { background: transparent; }
+  #log::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
+
+  .log-entry { display: flex; gap: 8px; }
+  .log-ts    { color: var(--muted); flex-shrink: 0; }
+  .log-src   { color: var(--gold); }
+  .log-hop   { color: var(--cyan); }
+  .log-same  { color: var(--green); }
+  .log-diff  { color: var(--red); }
+  .log-info  { color: var(--text); }
+  .log-done  { color: var(--green); }
+
+  #hint {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 6px 0 4px;
+    letter-spacing: 0.06em;
+  }
+
+  #hint span { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="status-dot"></div>
+  <h1>Network Packet Tracer</h1>
+  <span class="subtitle">// Visual Layer-2 / Layer-3 Simulation</span>
+</header>
+
+<div id="diagram-wrap">
+<!-- ===== SVG DIAGRAM ===== -->
+<svg viewBox="0 0 920 510" xmlns="http://www.w3.org/2000/svg" id="net-svg">
+<defs>
+  <!-- Subtle grid -->
+  <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+    <path d="M28 0L0 0 0 28" fill="none" stroke="#0c1424" stroke-width="0.6"/>
+  </pattern>
+
+  <!-- Glows -->
+  <filter id="glow-c" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-g" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-pkt" x="-200%" y="-200%" width="500%" height="500%">
+    <feGaussianBlur stdDeviation="8" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-pkt-inner" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Cable active gradient -->
+  <linearGradient id="cable-lit" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.3"/>
+    <stop offset="50%"  stop-color="#00d4ff"/>
+    <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.3"/>
+  </linearGradient>
+</defs>
+
+<!-- BG -->
+<rect width="920" height="510" fill="url(#grid)"/>
+
+<!-- =====================================================================
+     SUBNET BACKDROPS
+     ===================================================================== -->
+
+<!-- Subnet A -->
+<rect x="22" y="308" width="408" height="188" rx="10"
+      fill="#08101e" stroke="#1a2a50" stroke-width="1" stroke-dasharray="5 4"/>
+<text x="40" y="328" fill="#1a3870" font-family="Share Tech Mono" font-size="10" letter-spacing="1">
+  SUBNET  A  —  192.168.1.0/24  —  VLAN 10
+</text>
+
+<!-- Subnet B -->
+<rect x="490" y="308" width="408" height="188" rx="10"
+      fill="#08101e" stroke="#1a2a50" stroke-width="1" stroke-dasharray="5 4"/>
+<text x="508" y="328" fill="#1a3870" font-family="Share Tech Mono" font-size="10" letter-spacing="1">
+  SUBNET  B  —  192.168.2.0/24  —  VLAN 20
+</text>
+
+
+<!-- =====================================================================
+     ETHERNET CABLES (base — dim)
+     IDs must match animation code
+     ===================================================================== -->
+
+<!-- Router ↔ Switch -->
+<path id="c-rs" d="M 460 106 L 460 178"
+      stroke="#172840" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+<!-- Switch ↔ PC1   (switch port at x=375) -->
+<path id="c-sp1" d="M 375 240 C 375 290 135 310 135 342"
+      stroke="#172840" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+<!-- Switch ↔ PC2   (switch port at x=415) -->
+<path id="c-sp2" d="M 415 240 C 415 286 295 306 295 342"
+      stroke="#172840" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+<!-- Switch ↔ Laptop1 (switch port at x=505) -->
+<path id="c-sl1" d="M 505 240 C 505 286 625 306 625 342"
+      stroke="#172840" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+<!-- Switch ↔ Printer1 (switch port at x=545) -->
+<path id="c-sp3" d="M 545 240 C 545 290 785 310 785 342"
+      stroke="#172840" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+<!-- =====================================================================
+     ACTIVE CABLE OVERLAYS (hidden by default, lit during animation)
+     ===================================================================== -->
+<path id="a-rs"  d="M 460 106 L 460 178"
+      stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+<path id="a-sp1" d="M 375 240 C 375 290 135 310 135 342"
+      stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+<path id="a-sp2" d="M 415 240 C 415 286 295 306 295 342"
+      stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+<path id="a-sl1" d="M 505 240 C 505 286 625 306 625 342"
+      stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+<path id="a-sp3" d="M 545 240 C 545 290 785 310 785 342"
+      stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+
+
+<!-- =====================================================================
+     PORT CONNECTORS — small squares at cable endpoints (decorative)
+     ===================================================================== -->
+
+<!-- Router bottom port -->
+<rect x="455" y="102" width="10" height="7" rx="2" fill="#0f2018" stroke="#1e4030" stroke-width="1"/>
+
+<!-- Switch top port -->
+<rect x="455" y="174" width="10" height="7" rx="2" fill="#20200a" stroke="#404010" stroke-width="1"/>
+
+<!-- Switch bottom ports -->
+<rect x="370" y="236" width="10" height="7" rx="2" fill="#20200a" stroke="#404010" stroke-width="1"/>
+<rect x="410" y="236" width="10" height="7" rx="2" fill="#20200a" stroke="#404010" stroke-width="1"/>
+<rect x="500" y="236" width="10" height="7" rx="2" fill="#20200a" stroke="#404010" stroke-width="1"/>
+<rect x="540" y="236" width="10" height="7" rx="2" fill="#20200a" stroke="#404010" stroke-width="1"/>
+
+<!-- Device top ports (PC1, PC2, Laptop1, Printer1) -->
+<rect x="130" y="336" width="10" height="7" rx="2" fill="#10103a" stroke="#2a2a80" stroke-width="1"/>
+<rect x="290" y="336" width="10" height="7" rx="2" fill="#10103a" stroke="#2a2a80" stroke-width="1"/>
+<rect x="620" y="336" width="10" height="7" rx="2" fill="#0d1835" stroke="#1a3570" stroke-width="1"/>
+<rect x="780" y="336" width="10" height="7" rx="2" fill="#0d1835" stroke="#1a3570" stroke-width="1"/>
+
+
+<!-- =====================================================================
+     ROUTER
+     ===================================================================== -->
+<g id="node-router">
+  <rect x="330" y="18" width="260" height="88" rx="9"
+        fill="#0b1c10" stroke="#1c4025" stroke-width="1.5"/>
+  <!-- header bar -->
+  <rect x="330" y="18" width="260" height="26" rx="9" fill="#0e2a15"/>
+  <rect x="330" y="34"  width="260" height="10" fill="#0e2a15"/>
+  <!-- icon -->
+  <text x="348" y="38" fill="#00ff88" font-size="13">⬡</text>
+  <!-- title -->
+  <text x="460" y="38" text-anchor="middle" fill="#00ff88"
+        font-family="Orbitron" font-size="11" font-weight="700" letter-spacing="3">ROUTER</text>
+  <!-- details -->
+  <text x="460" y="58" text-anchor="middle" fill="#3a7050"
+        font-family="Share Tech Mono" font-size="9">MAC: FF:FF:00:00:00:01</text>
+  <text x="348" y="74" fill="#2a5038" font-family="Share Tech Mono" font-size="8.5">
+    eth0: 192.168.1.1/24  GW → Subnet A
+  </text>
+  <text x="348" y="88" fill="#2a5038" font-family="Share Tech Mono" font-size="8.5">
+    eth1: 192.168.2.1/24  GW → Subnet B
+  </text>
+  <!-- Corner accent -->
+  <polyline points="330,18 330,28 340,18" fill="#00ff88" opacity="0.5"/>
+  <polyline points="590,18 590,28 580,18" fill="#00ff88" opacity="0.5"/>
+</g>
+
+
+<!-- =====================================================================
+     SWITCH
+     ===================================================================== -->
+<g id="node-switch">
+  <rect x="340" y="178" width="240" height="62" rx="8"
+        fill="#18180a" stroke="#3a3608" stroke-width="1.5"/>
+  <!-- header bar -->
+  <rect x="340" y="178" width="240" height="22" rx="8" fill="#252508"/>
+  <rect x="340" y="190" width="240" height="10" fill="#252508"/>
+  <!-- icon -->
+  <text x="357" y="194" fill="#ffc740" font-size="11">⬡</text>
+  <!-- title -->
+  <text x="460" y="194" text-anchor="middle" fill="#ffc740"
+        font-family="Orbitron" font-size="10" font-weight="700" letter-spacing="3">SWITCH</text>
+  <!-- detail rows -->
+  <text x="460" y="212" text-anchor="middle" fill="#706000"
+        font-family="Share Tech Mono" font-size="8.5">MAC: FF:FF:00:00:00:02</text>
+  <text x="460" y="226" text-anchor="middle" fill="#504500"
+        font-family="Share Tech Mono" font-size="8">4-PORT  |  CAM TABLE  |  L2 FORWARDING</text>
+  <!-- Corner accent -->
+  <polyline points="340,178 340,188 350,178" fill="#ffc740" opacity="0.5"/>
+  <polyline points="580,178 580,188 570,178" fill="#ffc740" opacity="0.5"/>
+</g>
+
+
+<!-- =====================================================================
+     DEVICE NODES
+     Each: <g class="device-node" id="dn-X" data-ip data-mac data-subnet data-cable>
+     ===================================================================== -->
+
+<!-- PC1 -->
+<g class="device-node" id="dn-pc1"
+   data-ip="192.168.1.10" data-mac="AA:11:22:33:44:01"
+   data-subnet="A" data-cable="sp1">
+  <rect class="dev-body" x="58" y="342" width="154" height="140" rx="8"
+        fill="#080818" stroke="#1c1c50" stroke-width="1.5"/>
+  <!-- header -->
+  <rect class="dev-header" x="58" y="342" width="154" height="24" rx="8" fill="#10103a"/>
+  <rect x="58" y="356" width="154" height="10" fill="#10103a"/>
+  <!-- icon -->
+  <text x="74" y="359" fill="#7878ff" font-size="11">▣</text>
+  <!-- title -->
+  <text x="135" y="360" text-anchor="middle" fill="#7878ff"
+        font-family="Orbitron" font-size="9.5" font-weight="700" letter-spacing="2">PC1</text>
+  <!-- info -->
+  <text x="72" y="382" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">IP</text>
+  <text x="100" y="382" fill="#5050a0" font-family="Share Tech Mono" font-size="8.5">192.168.1.10</text>
+  <text x="72" y="396" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">MAC</text>
+  <text x="100" y="396" fill="#3a3a70" font-family="Share Tech Mono" font-size="8">AA:11:22:33:44:01</text>
+  <text x="72" y="410" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">GW</text>
+  <text x="100" y="410" fill="#2a2a60" font-family="Share Tech Mono" font-size="8.5">192.168.1.1</text>
+  <text x="72" y="424" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">NET</text>
+  <text x="100" y="424" fill="#2a2a60" font-family="Share Tech Mono" font-size="8.5">192.168.1.0/24</text>
+  <text x="72" y="438" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">OS</text>
+  <text x="100" y="438" fill="#2a2a55" font-family="Share Tech Mono" font-size="8.5">Ubuntu 22.04</text>
+  <!-- status LED -->
+  <circle cx="196" cy="353" r="4" fill="#1a1a4a" stroke="#3030a0" stroke-width="1"/>
+  <circle cx="196" cy="353" r="2" fill="#4040cc" opacity="0.7"/>
+  <!-- Corner accent -->
+  <polyline points="58,342 58,352 68,342" fill="#7878ff" opacity="0.4"/>
+  <polyline points="212,342 212,352 202,342" fill="#7878ff" opacity="0.4"/>
+</g>
+
+<!-- PC2 -->
+<g class="device-node" id="dn-pc2"
+   data-ip="192.168.1.20" data-mac="AA:11:22:33:44:02"
+   data-subnet="A" data-cable="sp2">
+  <rect class="dev-body" x="218" y="342" width="154" height="140" rx="8"
+        fill="#080818" stroke="#1c1c50" stroke-width="1.5"/>
+  <rect class="dev-header" x="218" y="342" width="154" height="24" rx="8" fill="#10103a"/>
+  <rect x="218" y="356" width="154" height="10" fill="#10103a"/>
+  <text x="234" y="359" fill="#7878ff" font-size="11">▣</text>
+  <text x="295" y="360" text-anchor="middle" fill="#7878ff"
+        font-family="Orbitron" font-size="9.5" font-weight="700" letter-spacing="2">PC2</text>
+  <text x="232" y="382" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">IP</text>
+  <text x="260" y="382" fill="#5050a0" font-family="Share Tech Mono" font-size="8.5">192.168.1.20</text>
+  <text x="232" y="396" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">MAC</text>
+  <text x="260" y="396" fill="#3a3a70" font-family="Share Tech Mono" font-size="8">AA:11:22:33:44:02</text>
+  <text x="232" y="410" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">GW</text>
+  <text x="260" y="410" fill="#2a2a60" font-family="Share Tech Mono" font-size="8.5">192.168.1.1</text>
+  <text x="232" y="424" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">NET</text>
+  <text x="260" y="424" fill="#2a2a60" font-family="Share Tech Mono" font-size="8.5">192.168.1.0/24</text>
+  <text x="232" y="438" fill="#3a3a80" font-family="Share Tech Mono" font-size="8.5">OS</text>
+  <text x="260" y="438" fill="#2a2a55" font-family="Share Tech Mono" font-size="8.5">Windows 11</text>
+  <circle cx="356" cy="353" r="4" fill="#1a1a4a" stroke="#3030a0" stroke-width="1"/>
+  <circle cx="356" cy="353" r="2" fill="#4040cc" opacity="0.7"/>
+  <polyline points="218,342 218,352 228,342" fill="#7878ff" opacity="0.4"/>
+  <polyline points="372,342 372,352 362,342" fill="#7878ff" opacity="0.4"/>
+</g>
+
+<!-- Laptop1 -->
+<g class="device-node" id="dn-laptop1"
+   data-ip="192.168.2.10" data-mac="BB:11:22:33:44:01"
+   data-subnet="B" data-cable="sl1">
+  <rect class="dev-body" x="548" y="342" width="154" height="140" rx="8"
+        fill="#050e1c" stroke="#0e2a50" stroke-width="1.5"/>
+  <rect class="dev-header" x="548" y="342" width="154" height="24" rx="8" fill="#0a1e3a"/>
+  <rect x="548" y="356" width="154" height="10" fill="#0a1e3a"/>
+  <text x="564" y="359" fill="#00aaff" font-size="11">⬒</text>
+  <text x="625" y="360" text-anchor="middle" fill="#00aaff"
+        font-family="Orbitron" font-size="8" font-weight="700" letter-spacing="2">LAPTOP1</text>
+  <text x="562" y="382" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">IP</text>
+  <text x="590" y="382" fill="#1e5a90" font-family="Share Tech Mono" font-size="8.5">192.168.2.10</text>
+  <text x="562" y="396" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">MAC</text>
+  <text x="590" y="396" fill="#1a3a65" font-family="Share Tech Mono" font-size="8">BB:11:22:33:44:01</text>
+  <text x="562" y="410" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">GW</text>
+  <text x="590" y="410" fill="#122a50" font-family="Share Tech Mono" font-size="8.5">192.168.2.1</text>
+  <text x="562" y="424" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">NET</text>
+  <text x="590" y="424" fill="#122a50" font-family="Share Tech Mono" font-size="8.5">192.168.2.0/24</text>
+  <text x="562" y="438" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">OS</text>
+  <text x="590" y="438" fill="#0e2040" font-family="Share Tech Mono" font-size="8.5">macOS 15.3</text>
+  <circle cx="686" cy="353" r="4" fill="#0a1e3a" stroke="#0e3560" stroke-width="1"/>
+  <circle cx="686" cy="353" r="2" fill="#0050a0" opacity="0.7"/>
+  <polyline points="548,342 548,352 558,342" fill="#00aaff" opacity="0.4"/>
+  <polyline points="702,342 702,352 692,342" fill="#00aaff" opacity="0.4"/>
+</g>
+
+<!-- Printer1 -->
+<g class="device-node" id="dn-printer1"
+   data-ip="192.168.2.20" data-mac="BB:11:22:33:44:02"
+   data-subnet="B" data-cable="sp3">
+  <rect class="dev-body" x="708" y="342" width="154" height="140" rx="8"
+        fill="#050e1c" stroke="#0e2a50" stroke-width="1.5"/>
+  <rect class="dev-header" x="708" y="342" width="154" height="24" rx="8" fill="#0a1e3a"/>
+  <rect x="708" y="356" width="154" height="10" fill="#0a1e3a"/>
+  <text x="724" y="359" fill="#00aaff" font-size="11">▤</text>
+  <text x="785" y="360" text-anchor="middle" fill="#00aaff"
+        font-family="Orbitron" font-size="8" font-weight="700" letter-spacing="2">PRINTER1</text>
+  <text x="722" y="382" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">IP</text>
+  <text x="750" y="382" fill="#1e5a90" font-family="Share Tech Mono" font-size="8.5">192.168.2.20</text>
+  <text x="722" y="396" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">MAC</text>
+  <text x="750" y="396" fill="#1a3a65" font-family="Share Tech Mono" font-size="8">BB:11:22:33:44:02</text>
+  <text x="722" y="410" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">GW</text>
+  <text x="750" y="410" fill="#122a50" font-family="Share Tech Mono" font-size="8.5">192.168.2.1</text>
+  <text x="722" y="424" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">NET</text>
+  <text x="750" y="424" fill="#122a50" font-family="Share Tech Mono" font-size="8.5">192.168.2.0/24</text>
+  <text x="722" y="438" fill="#1a4070" font-family="Share Tech Mono" font-size="8.5">OS</text>
+  <text x="750" y="438" fill="#0e2040" font-family="Share Tech Mono" font-size="8.5">Firmware 3.4.1</text>
+  <circle cx="846" cy="353" r="4" fill="#0a1e3a" stroke="#0e3560" stroke-width="1"/>
+  <circle cx="846" cy="353" r="2" fill="#0050a0" opacity="0.7"/>
+  <polyline points="708,342 708,352 718,342" fill="#00aaff" opacity="0.4"/>
+  <polyline points="862,342 862,352 852,342" fill="#00aaff" opacity="0.4"/>
+</g>
+
+
+<!-- =====================================================================
+     PACKET (animated dot — starts hidden)
+     ===================================================================== -->
+<circle id="pkt-glow"  r="12" fill="#ff4a6e" opacity="0" filter="url(#glow-pkt)"/>
+<circle id="pkt-outer" r="7"  fill="#ff6a40" opacity="0" filter="url(#glow-pkt-inner)"/>
+<circle id="pkt-inner" r="3.5" fill="#ffffff" opacity="0"/>
+
+</svg>
+</div>
+
+<div id="hint">Click a <span>SOURCE</span> device, then a <span>DESTINATION</span> device to trace the packet</div>
+
+<div id="log-section">
+  <div class="log-header">Packet Trace Log</div>
+  <div id="log"></div>
+</div>
+
+<script>
+// ─── Cable path map ────────────────────────────────────────────────────────────
+// 'sp1', 'sp2', 'sl1', 'sp3' match data-cable on device nodes
+// 'rs'  = router↔switch link
+// Paths are defined so start=switch-end, finish=device-end
+// (or start=router-end, finish=switch-end for rs)
+const CABLE_IDS = {
+  rs:  { base: 'c-rs',  active: 'a-rs'  },
+  sp1: { base: 'c-sp1', active: 'a-sp1' },
+  sp2: { base: 'c-sp2', active: 'a-sp2' },
+  sl1: { base: 'c-sl1', active: 'a-sl1' },
+  sp3: { base: 'c-sp3', active: 'a-sp3' },
+};
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let selectedNode = null;
+let animating    = false;
+let logSeq       = 0;
+
+// ─── DOM refs ──────────────────────────────────────────────────────────────────
+const pktGlow  = document.getElementById('pkt-glow');
+const pktOuter = document.getElementById('pkt-outer');
+const pktInner = document.getElementById('pkt-inner');
+const logEl    = document.getElementById('log');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function ts() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+}
+
+function writeLog(cls, msg) {
+  logSeq++;
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<span class="log-ts">[${ts()}]</span><span class="log-${cls}">${msg}</span>`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function setPacketPos(x, y) {
+  [pktGlow, pktOuter, pktInner].forEach(el => {
+    el.setAttribute('cx', x);
+    el.setAttribute('cy', y);
+  });
+}
+
+function showPacket(v) {
+  const o = v ? '1' : '0';
+  pktGlow.setAttribute('opacity', v ? '0.6' : '0');
+  pktOuter.setAttribute('opacity', o);
+  pktInner.setAttribute('opacity', o);
+}
+
+// ease-in-out cubic
+function easeInOut(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+}
+
+// ─── Animation ────────────────────────────────────────────────────────────────
+// Animate packet along a path element
+// reverse=true  → travels from end→start of path
+// duration in ms
+function animatePath(cableKey, reverse, duration) {
+  return new Promise(resolve => {
+    const ids   = CABLE_IDS[cableKey];
+    const path  = document.getElementById(ids.base);
+    const aPath = document.getElementById(ids.active);
+    const len   = path.getTotalLength();
+
+    // Light up the active cable
+    aPath.setAttribute('opacity', '1');
+
+    const t0 = performance.now();
+
+    function frame(now) {
+      let frac = Math.min((now - t0) / duration, 1);
+      frac = easeInOut(frac);
+
+      const dist = reverse ? len * (1 - frac) : len * frac;
+      const pt   = path.getPointAtLength(dist);
+      setPacketPos(pt.x, pt.y);
+
+      if ((now - t0) < duration) {
+        requestAnimationFrame(frame);
+      } else {
+        aPath.setAttribute('opacity', '0');
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+// ─── Simulate ─────────────────────────────────────────────────────────────────
+async function simulate(srcEl, dstEl) {
+  if (animating) return;
+  animating = true;
+
+  const srcIP     = srcEl.dataset.ip;
+  const dstIP     = dstEl.dataset.ip;
+  const srcMAC    = srcEl.dataset.mac;
+  const dstMAC    = dstEl.dataset.mac;
+  const srcSubnet = srcEl.dataset.subnet;
+  const dstSubnet = dstEl.dataset.subnet;
+  const srcCable  = srcEl.dataset.cable;
+  const dstCable  = dstEl.dataset.cable;
+  const sameSubnet = (srcSubnet === dstSubnet);
+
+  // ── Header log ──
+  writeLog('src', `━━ NEW FRAME  ${srcIP} (${srcMAC})  ──▶  ${dstIP} (${dstMAC})`);
+
+  if (sameSubnet) {
+    writeLog('same', `✔  Same subnet (${srcSubnet}) — L2 switch forwarding only`);
+  } else {
+    writeLog('diff', `✘  Different subnets (${srcSubnet} → ${dstSubnet}) — L3 routing required`);
+  }
+
+  // Show packet
+  showPacket(true);
+
+  if (sameSubnet) {
+    // ── HOP 1: src → switch ──
+    writeLog('hop', `HOP 1  ${srcIP} ──▶  Switch  [L2 frame, dst MAC: ${dstMAC}]`);
+    // Device cables are defined switch→device, so to go device→switch we reverse
+    await animatePath(srcCable, true,  550);
+
+    // ── HOP 2: switch → dst ──
+    writeLog('hop', `HOP 2  Switch ──▶  ${dstIP}  [CAM table lookup hit]`);
+    await animatePath(dstCable, false, 550);
+
+  } else {
+    // ── HOP 1: src → switch ──
+    writeLog('hop', `HOP 1  ${srcIP} ──▶  Switch  [dst MAC: FF:FF:00:00:00:01 (Router GW)]`);
+    await animatePath(srcCable, true,  480);
+
+    // ── HOP 2: switch → router ──
+    // Router-switch path is defined router→switch, so switch→router = reverse
+    writeLog('hop', `HOP 2  Switch ──▶  Router  [ARP: who has ${srcIP.split('.').slice(0,3).join('.')}.1?]`);
+    await animatePath('rs', true,  360);
+
+    // ── HOP 3: router → switch ──
+    writeLog('hop', `HOP 3  Router ──▶  Switch  [route: ${dstIP} via ${dstIP.split('.').slice(0,3).join('.')}.1, new dst MAC: ${dstMAC}]`);
+    await animatePath('rs', false, 360);
+
+    // ── HOP 4: switch → dst ──
+    writeLog('hop', `HOP 4  Switch ──▶  ${dstIP}  [CAM table lookup, L2 delivery]`);
+    await animatePath(dstCable, false, 480);
+  }
+
+  writeLog('done', `✓  Delivered  ·  ${sameSubnet ? '2 hops (L2)' : '4 hops (L3)'}  ·  ${sameSubnet ? 'No NAT' : 'Routed'}`);
+
+  showPacket(false);
+  animating = false;
+}
+
+// ─── Click handlers ────────────────────────────────────────────────────────────
+document.querySelectorAll('.device-node').forEach(node => {
+  node.addEventListener('click', () => {
+    if (animating) return;
+
+    if (!selectedNode) {
+      // Select as source
+      selectedNode = node;
+      node.classList.add('selected');
+      writeLog('src', `SOURCE selected: ${node.dataset.ip}  (${node.dataset.mac})`);
+
+    } else if (selectedNode === node) {
+      // Deselect
+      selectedNode.classList.remove('selected');
+      selectedNode = null;
+      writeLog('info', 'Selection cleared.');
+
+    } else {
+      // Run simulation
+      const src = selectedNode;
+      src.classList.remove('selected');
+      selectedNode = null;
+      simulate(src, node);
+    }
+  });
+});
+
+// ─── Initial log message ──────────────────────────────────────────────────────
+writeLog('info', 'System ready.  Click any device to begin packet trace.');
+</script>
+
+</body>
+</html>
