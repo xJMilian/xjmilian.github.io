@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompTIA A+ PBQ — Motherboard ID</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #080c0a;
+    --panel:       #0d1410;
+    --border:      #1a2e1e;
+    --accent:      #39ff8a;
+    --accent-dim:  #1a7a40;
+    --accent2:     #00d4aa;
+    --text:        #c8e8d0;
+    --muted:       #3d5e45;
+    --label:       #8fbf9a;
+    --correct:     #39ff8a;
+    --wrong:       #ff3a5c;
+    --warn:        #ffb830;
+    --correct-glow: 0 0 0 2px #39ff8a, 0 0 16px 4px rgba(57,255,138,.4);
+    --wrong-glow:   0 0 0 2px #ff3a5c, 0 0 16px 4px rgba(255,58,92,.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 64px;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(57,255,138,.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(0,212,170,.03) 0%, transparent 60%);
+  }
+
+  /* scan-line overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+      rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px);
+    pointer-events: none; z-index: 999;
+  }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 22px; }
+
+  .meta-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: .16em;
+    color: var(--accent); border: 1px solid var(--accent-dim);
+    padding: 3px 10px; border-radius: 2px; text-transform: uppercase;
+  }
+  .badge.warn { color: var(--warn); border-color: #7a5500; }
+  .badge.obj  { color: var(--accent2); border-color: #006655; }
+
+  h1 {
+    font-size: clamp(24px, 4.5vw, 40px);
+    font-weight: 800; letter-spacing: .04em; color: #fff;
+    text-shadow: 0 0 28px rgba(57,255,138,.3);
+    line-height: 1.1;
+  }
+  .subtitle {
+    margin-top: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11.5px; color: var(--muted); letter-spacing: .05em;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px 24px 26px;
+    width: 100%; max-width: 900px;
+    box-shadow: 0 12px 60px rgba(0,0,0,.7), inset 0 1px 0 rgba(57,255,138,.06);
+  }
+
+  .instructions {
+    font-family: 'Share Tech Mono', monospace; font-size: 12px;
+    color: var(--muted); border-left: 3px solid var(--accent-dim);
+    padding-left: 12px; margin-bottom: 20px; line-height: 1.75;
+  }
+  .instructions .hi  { color: var(--accent); }
+  .instructions .hi2 { color: var(--accent2); }
+
+  /* ── Diagram ── */
+  .diagram-wrap { position: relative; width: 100%; user-select: none; }
+  .diagram-wrap svg { width: 100%; height: auto; display: block; border-radius: 4px; }
+
+  /* ── Dropdowns ── */
+  .drop-zone {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+
+  select {
+    font-family: 'Share Tech Mono', monospace; font-size: 10.5px;
+    color: var(--text); background: rgba(8,12,10,.93);
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 4px 22px 4px 8px; cursor: pointer;
+    outline: none; width: 148px;
+    box-shadow: 0 0 0 1px #1a2e1e, 0 2px 8px rgba(0,0,0,.6);
+    transition: box-shadow .25s, border-color .25s, color .25s;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233d5e45'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 7px center;
+  }
+  select:hover  { border-color: var(--accent-dim); }
+  select option { background: #0a130c; }
+
+  select.correct { box-shadow: var(--correct-glow); border-color: var(--correct); color: var(--correct); }
+  select.wrong   { box-shadow: var(--wrong-glow);   border-color: var(--wrong);   color: var(--wrong);   }
+  select.unanswered { box-shadow: 0 0 0 2px var(--warn), 0 0 12px 2px rgba(255,184,48,.3); border-color: var(--warn); }
+
+  /* ── Explanation panel ── */
+  #explanations {
+    margin-top: 18px; display: none;
+    background: rgba(0,0,0,.3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 14px 18px;
+  }
+  #explanations.show { display: block; }
+  #explanations h3 {
+    font-size: 13px; letter-spacing: .1em; color: var(--accent2);
+    font-family: 'Share Tech Mono', monospace; margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .exp-item {
+    display: flex; gap: 10px; align-items: baseline;
+    margin-bottom: 7px; font-size: 13px; line-height: 1.5;
+  }
+  .exp-num {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: var(--accent); min-width: 18px; padding-top: 1px;
+  }
+  .exp-text { color: var(--label); }
+  .exp-text strong { color: var(--text); font-weight: 600; }
+
+  /* ── Actions ── */
+  .actions {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 22px; flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 15px;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 9px 26px; border-radius: 3px;
+    border: none; cursor: pointer; transition: all .2s;
+  }
+
+  #submitBtn {
+    background: var(--accent); color: #050f08;
+    box-shadow: 0 0 20px rgba(57,255,138,.3);
+  }
+  #submitBtn:hover { background: #5affa0; box-shadow: 0 0 32px rgba(57,255,138,.5); }
+
+  #resetBtn {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  #resetBtn:hover { color: var(--text); border-color: var(--muted); }
+
+  #result {
+    font-family: 'Share Tech Mono', monospace; font-size: 12.5px;
+    padding: 7px 16px; border-radius: 3px; display: none;
+  }
+  #result.show { display: inline-block; }
+  #result.pass { background: rgba(57,255,138,.08); border: 1px solid var(--correct); color: var(--correct); }
+  #result.fail { background: rgba(255,58,92,.08);  border: 1px solid var(--wrong);   color: var(--wrong); }
+  #result.warn { background: rgba(255,184,48,.08); border: 1px solid var(--warn);    color: var(--warn); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="meta-row">
+    <div class="badge">CompTIA A+ 220-1201 v15 · Core 1</div>
+    <div class="badge obj">Obj 3.4 — Motherboards, CPUs &amp; Add-on Cards</div>
+    <div class="badge warn">⬤ Medium</div>
+  </div>
+  <h1>Motherboard Component Identification</h1>
+  <p class="subtitle">// Identify all 8 labeled components on the ATX motherboard below</p>
+</header>
+
+<div class="card">
+  <p class="instructions">
+    <span class="hi">TASK:</span> Eight components on this ATX motherboard have been marked with numbered callouts (<span class="hi">①</span>–<span class="hi">⑧</span>).<br>
+    Use the dropdown on each callout to identify the component. Click <span class="hi2">SUBMIT</span> to grade. All 8 must be answered.<br>
+    <span class="hi">TIP:</span> Some components look similar — pay attention to size, location, and pin count.
+  </p>
+
+  <div class="diagram-wrap" id="diagramWrap">
+
+    <!--
+      ═══════════════════════════════════════════════════════════
+      SVG ATX MOTHERBOARD  —  viewBox 0 0 800 500
+      Component centers (SVG coords → drop-zone % of 800×500):
+        ① CPU Socket     (190, 195)  →  23.8%,  39%
+        ② DIMM Slots     (368, 155)  →  46.0%,  31%
+        ③ PCIe x16       (265, 408)  →  33.1%,  81.6%
+        ④ M.2 Slot       (548, 298)  →  68.5%,  59.6%
+        ⑤ SATA Ports     (710, 350)  →  88.8%,  70%
+        ⑥ 24-pin ATX     (728, 165)  →  91.0%,  33%
+        ⑦ CMOS Battery   (510, 385)  →  63.8%,  77%
+        ⑧ Front Panel    (125, 452)  →  15.6%,  90.4%
+      ═══════════════════════════════════════════════════════════
+    -->
+    <svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg" aria-label="ATX Motherboard Diagram">
+      <defs>
+        <filter id="softglow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="tinyglow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="pcbGrad" cx="40%" cy="35%" r="65%">
+          <stop offset="0%"   stop-color="#0d1f10"/>
+          <stop offset="100%" stop-color="#080e09"/>
+        </radialGradient>
+        <radialGradient id="battGrad" cx="40%" cy="35%" r="60%">
+          <stop offset="0%"   stop-color="#bba020"/>
+          <stop offset="100%" stop-color="#7a6500"/>
+        </radialGradient>
+        <pattern id="pinGrid" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+          <circle cx="2.5" cy="2.5" r="1" fill="#2a4030"/>
+        </pattern>
+        <!-- Copper trace lines -->
+        <pattern id="traceH" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="20" x2="40" y2="20" stroke="#112016" stroke-width="1"/>
+        </pattern>
+      </defs>
+
+      <!-- ── PCB BASE ── -->
+      <rect x="28" y="18" width="744" height="464" rx="6" fill="url(#pcbGrad)" stroke="#1a3020" stroke-width="2"/>
+
+      <!-- Subtle PCB texture / trace grid -->
+      <rect x="28" y="18" width="744" height="464" rx="6" fill="url(#traceH)" opacity=".4"/>
+
+      <!-- Mount holes (corners + mid) -->
+      <g fill="#060c07" stroke="#0f1e12" stroke-width="1.5">
+        <circle cx="55"  cy="45"  r="8"/>
+        <circle cx="745" cy="45"  r="8"/>
+        <circle cx="745" cy="475" r="8"/>
+        <circle cx="55"  cy="475" r="8"/>
+        <circle cx="55"  cy="260" r="8"/>
+        <circle cx="490" cy="475" r="8"/>
+      </g>
+      <g fill="none" stroke="#1e3a22" stroke-width=".8">
+        <circle cx="55"  cy="45"  r="12"/>
+        <circle cx="745" cy="45"  r="12"/>
+        <circle cx="745" cy="475" r="12"/>
+        <circle cx="55"  cy="475" r="12"/>
+        <circle cx="55"  cy="260" r="12"/>
+        <circle cx="490" cy="475" r="12"/>
+      </g>
+
+      <!-- ═══════════════════════════
+           I/O SHIELD AREA (left)
+           ═══════════════════════════ -->
+      <rect x="28" y="18" width="22" height="185" fill="#0a1a0c" stroke="#1a3020" stroke-width="1"/>
+      <!-- Port cutouts -->
+      <g fill="#050a06" stroke="#0d1a0f" stroke-width="1">
+        <rect x="32" y="28" width="14" height="18" rx="2"/>
+        <rect x="32" y="50" width="14" height="18" rx="2"/>
+        <rect x="32" y="72" width="14" height="30" rx="2"/>
+        <rect x="32" y="108" width="14" height="12" rx="1"/>
+        <rect x="32" y="124" width="14" height="12" rx="1"/>
+        <rect x="32" y="140" width="14" height="18" rx="2"/>
+        <rect x="32" y="163" width="14" height="30" rx="2"/>
+      </g>
+      <!-- I/O label -->
+      <text x="50" y="215" transform="rotate(-90,50,215)" font-family="Share Tech Mono,monospace" font-size="7" fill="#1a3020" letter-spacing=".15em">I/O PORTS</text>
+
+      <!-- ═══════════════════════════
+           PCB TRACES (decorative)
+           ═══════════════════════════ -->
+      <g stroke="#0e2014" stroke-width="1.2" fill="none" opacity=".9">
+        <!-- Horizontal runs -->
+        <path d="M 320 60 H 650"/>
+        <path d="M 80  440 H 450"/>
+        <path d="M 550 440 H 680"/>
+        <path d="M 330 90 H 430 V 130"/>
+        <path d="M 450 200 H 530 V 280"/>
+        <path d="M 600 60 V 80 H 680"/>
+        <!-- Vertical runs -->
+        <path d="M 680 60 V 90"/>
+        <path d="M 420 340 V 390 H 490"/>
+        <path d="M 480 330 H 510 V 365"/>
+        <!-- 45-degree jogs -->
+        <path d="M 300 330 L 320 310 H 430"/>
+        <path d="M 135 200 V 240 L 155 260"/>
+        <path d="M 640 300 L 660 280 V 240"/>
+      </g>
+
+      <!-- ═══════════════════════════
+           VRM PHASES (near CPU, unlabeled)
+           ═══════════════════════════ -->
+      <!-- Capacitor columns -->
+      <g fill="#1a3020" stroke="#0f2015" stroke-width="1">
+        <rect x="80" y="130" width="18" height="28" rx="3"/>
+        <rect x="102" y="130" width="18" height="28" rx="3"/>
+        <rect x="80"  y="85"  width="18" height="28" rx="3"/>
+        <rect x="102" y="85"  width="18" height="28" rx="3"/>
+        <rect x="80"  y="40"  width="18" height="28" rx="3"/>
+        <rect x="102" y="40"  width="18" height="28" rx="3"/>
+        <!-- Mosfet blocks -->
+        <rect x="122" y="40" width="20" height="18" rx="2"/>
+        <rect x="122" y="62" width="20" height="18" rx="2"/>
+        <rect x="122" y="84" width="20" height="18" rx="2"/>
+      </g>
+      <text x="94" y="175" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020" letter-spacing=".08em">VRM</text>
+
+      <!-- ═══════════════════════════
+           ① CPU SOCKET  (center ~190,195)
+           ═══════════════════════════ -->
+      <!-- Mounting holes -->
+      <g fill="none" stroke="#112016" stroke-width="1">
+        <circle cx="141" cy="141" r="6"/>
+        <circle cx="241" cy="141" r="6"/>
+        <circle cx="141" cy="251" r="6"/>
+        <circle cx="241" cy="251" r="6"/>
+      </g>
+      <!-- Outer retention frame -->
+      <rect x="130" y="130" width="122" height="122" rx="4" fill="#0a1a0c" stroke="#1a4020" stroke-width="2"/>
+      <!-- Socket body -->
+      <rect x="138" y="138" width="106" height="106" rx="3" fill="#060e08" stroke="#0f2015" stroke-width="1.5"/>
+      <!-- Pin array -->
+      <rect x="140" y="140" width="102" height="102" fill="url(#pinGrid)" rx="2"/>
+      <!-- Alignment triangle -->
+      <polygon points="143,143 153,143 143,153" fill="#1a4020" opacity=".8"/>
+      <!-- LGA label on socket -->
+      <text x="191" y="197" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#1a3020" letter-spacing=".06em">LGA</text>
+      <!-- ZIF lever -->
+      <rect x="252" y="175" width="8" height="42" rx="3" fill="#0f2015" stroke="#1a3020" stroke-width="1"/>
+      <circle cx="256" cy="172" r="4" fill="#0f2015" stroke="#1a3020" stroke-width="1"/>
+      <!-- Badge ① -->
+      <circle cx="136" cy="136" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="136" y="140" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">1</text>
+
+      <!-- ═══════════════════════════
+           CPU 8-PIN EPS (top, unlabeled)
+           ═══════════════════════════ -->
+      <rect x="155" y="22" width="44" height="26" rx="3" fill="#0d1a10" stroke="#1a3020" stroke-width="1.5"/>
+      <g fill="#060e08" stroke="#0f2015" stroke-width=".8">
+        <rect x="159" y="26" width="8"  height="8"  rx="1"/>
+        <rect x="170" y="26" width="8"  height="8"  rx="1"/>
+        <rect x="181" y="26" width="8"  height="8"  rx="1"/>
+        <rect x="192" y="26" width="8"  height="8"  rx="1"/>
+        <rect x="159" y="36" width="8"  height="8"  rx="1"/>
+        <rect x="170" y="36" width="8"  height="8"  rx="1"/>
+        <rect x="181" y="36" width="8"  height="8"  rx="1"/>
+        <rect x="192" y="36" width="8"  height="8"  rx="1"/>
+      </g>
+      <text x="178" y="58" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">CPU_PWR1</text>
+
+      <!-- ═══════════════════════════
+           ② DIMM SLOTS  (center ~368,155)
+           ═══════════════════════════ -->
+      <!-- 4 RAM slots -->
+      <g>
+        <!-- Slot A1 -->
+        <rect x="342" y="72" width="14" height="172" rx="2" fill="#060e08" stroke="#1a4020" stroke-width="1.5"/>
+        <rect x="344" y="74" width="10" height="168" rx="1" fill="#091408"/>
+        <rect x="344" y="148" width="10" height="4"  fill="#0a1a0c"/><!-- key notch -->
+        <!-- Slot A2 -->
+        <rect x="360" y="72" width="14" height="172" rx="2" fill="#060e08" stroke="#112016" stroke-width="1.5"/>
+        <rect x="362" y="74" width="10" height="168" rx="1" fill="#091408"/>
+        <rect x="362" y="148" width="10" height="4" fill="#0a1a0c"/>
+        <!-- Slot B1 -->
+        <rect x="378" y="72" width="14" height="172" rx="2" fill="#060e08" stroke="#1a4020" stroke-width="1.5"/>
+        <rect x="380" y="74" width="10" height="168" rx="1" fill="#091408"/>
+        <rect x="380" y="148" width="10" height="4" fill="#0a1a0c"/>
+        <!-- Slot B2 -->
+        <rect x="396" y="72" width="14" height="172" rx="2" fill="#060e08" stroke="#112016" stroke-width="1.5"/>
+        <rect x="398" y="74" width="10" height="168" rx="1" fill="#091408"/>
+        <rect x="398" y="148" width="10" height="4" fill="#0a1a0c"/>
+        <!-- Retention clips -->
+        <rect x="340" y="68" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="340" y="238" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="358" y="68" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="358" y="238" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="376" y="68" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="376" y="238" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="394" y="68" width="18" height="6" rx="1" fill="#0f2015"/>
+        <rect x="394" y="238" width="18" height="6" rx="1" fill="#0f2015"/>
+        <!-- Silk labels -->
+        <text x="349" y="265" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">A1</text>
+        <text x="367" y="265" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">A2</text>
+        <text x="385" y="265" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">B1</text>
+        <text x="403" y="265" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">B2</text>
+      </g>
+      <!-- Badge ② -->
+      <circle cx="344" cy="74" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="344" y="78" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">2</text>
+
+      <!-- ═══════════════════════════
+           CHIPSET / PCH (unlabeled)
+           ═══════════════════════════ -->
+      <rect x="450" y="270" width="55" height="55" rx="3" fill="#0c1a0e" stroke="#1a3020" stroke-width="1.5"/>
+      <rect x="455" y="275" width="45" height="45" rx="2" fill="#091408" stroke="#0f2015" stroke-width="1"/>
+      <text x="478" y="301" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1a3020">PCH</text>
+      <!-- PCH traces to SATA region -->
+      <path d="M 505 295 H 540 V 310" stroke="#0e2014" stroke-width="1.5" fill="none"/>
+      <path d="M 505 305 H 540" stroke="#0e2014" stroke-width="1" fill="none"/>
+
+      <!-- ═══════════════════════════
+           ③ PCIe x16 SLOT  (~265,408)
+           ═══════════════════════════ -->
+      <!-- slot body -->
+      <rect x="58" y="400" width="450" height="16" rx="3" fill="#060e08" stroke="#1a4020" stroke-width="1.5"/>
+      <rect x="60" y="402" width="446" height="12" rx="2" fill="#091408"/>
+      <!-- Key notch at x=158 from left = x=216 -->
+      <rect x="220" y="401" width="8" height="14" fill="#060e08"/>
+      <!-- Contact pads (gold strips) -->
+      <g fill="#2a3a10" opacity=".6">
+        <rect x="62" y="405" width="155" height="3" rx="1"/>
+        <rect x="230" y="405" width="272" height="3" rx="1"/>
+        <rect x="62" y="410" width="155" height="3" rx="1"/>
+        <rect x="230" y="410" width="272" height="3" rx="1"/>
+      </g>
+      <!-- Slot silk label -->
+      <text x="300" y="428" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1a3020" letter-spacing=".06em">PCIE_X16_1</text>
+      <!-- Badge ③ -->
+      <circle cx="64" cy="402" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="64" y="406" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">3</text>
+
+      <!-- PCIe x1 SLOTS (smaller, unlabeled) -->
+      <rect x="58" y="350" width="130" height="11" rx="2" fill="#060e08" stroke="#112016" stroke-width="1"/>
+      <rect x="60" y="352" width="126" height="7"  rx="1" fill="#091408"/>
+      <text x="125" y="375" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">PCIE_X1_1</text>
+      <rect x="58" y="370" width="130" height="11" rx="2" fill="#060e08" stroke="#112016" stroke-width="1"/>
+      <rect x="60" y="372" width="126" height="7"  rx="1" fill="#091408"/>
+      <text x="125" y="390" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020">PCIE_X1_2</text>
+
+      <!-- ═══════════════════════════
+           ④ M.2 SLOT  (~548,298)
+           ═══════════════════════════ -->
+      <rect x="506" y="293" width="88" height="11" rx="2" fill="#060e08" stroke="#1a4020" stroke-width="1.5"/>
+      <rect x="508" y="295" width="84" height="7"  rx="1" fill="#091408"/>
+      <!-- M.2 mounting screw -->
+      <circle cx="596" cy="315" r="5" fill="#0d1a10" stroke="#1a3020" stroke-width="1"/>
+      <line x1="594" y1="315" x2="598" y2="315" stroke="#1a3020" stroke-width="1"/>
+      <line x1="596" y1="313" x2="596" y2="317" stroke="#1a3020" stroke-width="1"/>
+      <!-- Silk label -->
+      <text x="545" y="287" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1a3020" letter-spacing=".04em">M.2_SSD1</text>
+      <!-- Edge key -->
+      <rect x="561" y="293" width="6" height="11" fill="#0a1a0c"/>
+      <!-- Badge ④ -->
+      <circle cx="508" cy="293" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="508" y="297" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">4</text>
+
+      <!-- ═══════════════════════════
+           ⑤ SATA PORTS  (~710,350)
+           ═══════════════════════════ -->
+      <g>
+        <!-- 6 SATA ports stacked -->
+        <!-- Port housing outer -->
+        <rect x="688" y="308" width="38" height="88" rx="2" fill="#0d1a10" stroke="#1a3020" stroke-width="1.5"/>
+        <!-- Individual port cutouts -->
+        <g fill="#050c07" stroke="#0f2015" stroke-width="1">
+          <rect x="692" y="312" width="30" height="10" rx="1"/>
+          <rect x="692" y="325" width="30" height="10" rx="1"/>
+          <rect x="692" y="338" width="30" height="10" rx="1"/>
+          <rect x="692" y="351" width="30" height="10" rx="1"/>
+          <rect x="692" y="364" width="30" height="10" rx="1"/>
+          <rect x="692" y="377" width="30" height="10" rx="1"/>
+        </g>
+        <!-- Port L-key (SATA shape inside each) -->
+        <g fill="#0a1a0c">
+          <polygon points="692,312 704,312 704,316 696,316 696,322 692,322"/>
+          <polygon points="692,325 704,325 704,329 696,329 696,335 692,335"/>
+          <polygon points="692,338 704,338 704,342 696,342 696,348 692,348"/>
+          <polygon points="692,351 704,351 704,355 696,355 696,361 692,361"/>
+          <polygon points="692,364 704,364 704,368 696,368 696,374 692,374"/>
+          <polygon points="692,377 704,377 704,381 696,381 696,387 692,387"/>
+        </g>
+        <!-- Silk labels -->
+        <text x="726" y="317" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA0</text>
+        <text x="726" y="330" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA1</text>
+        <text x="726" y="343" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA2</text>
+        <text x="726" y="356" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA3</text>
+        <text x="726" y="369" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA4</text>
+        <text x="726" y="382" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SATA5</text>
+      </g>
+      <!-- Badge ⑤ -->
+      <circle cx="690" cy="310" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="690" y="314" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">5</text>
+
+      <!-- ═══════════════════════════
+           ⑥ 24-PIN ATX  (~728,165)
+           ═══════════════════════════ -->
+      <rect x="708" y="86" width="46" height="160" rx="3" fill="#0d1a10" stroke="#1a4020" stroke-width="2"/>
+      <!-- 2×12 pin array -->
+      <g fill="#060e08" stroke="#0f2015" stroke-width=".8">
+        <!-- Col 1 (left) -->
+        <rect x="712" y="92"  width="8" height="9" rx="1"/>
+        <rect x="712" y="104" width="8" height="9" rx="1"/>
+        <rect x="712" y="116" width="8" height="9" rx="1"/>
+        <rect x="712" y="128" width="8" height="9" rx="1"/>
+        <rect x="712" y="140" width="8" height="9" rx="1"/>
+        <rect x="712" y="152" width="8" height="9" rx="1"/>
+        <rect x="712" y="164" width="8" height="9" rx="1"/>
+        <rect x="712" y="176" width="8" height="9" rx="1"/>
+        <rect x="712" y="188" width="8" height="9" rx="1"/>
+        <rect x="712" y="200" width="8" height="9" rx="1"/>
+        <rect x="712" y="212" width="8" height="9" rx="1"/>
+        <rect x="712" y="224" width="8" height="9" rx="1"/>
+        <!-- Col 2 (right) -->
+        <rect x="724" y="92"  width="8" height="9" rx="1"/>
+        <rect x="724" y="104" width="8" height="9" rx="1"/>
+        <rect x="724" y="116" width="8" height="9" rx="1"/>
+        <rect x="724" y="128" width="8" height="9" rx="1"/>
+        <rect x="724" y="140" width="8" height="9" rx="1"/>
+        <rect x="724" y="152" width="8" height="9" rx="1"/>
+        <rect x="724" y="164" width="8" height="9" rx="1"/>
+        <rect x="724" y="176" width="8" height="9" rx="1"/>
+        <rect x="724" y="188" width="8" height="9" rx="1"/>
+        <rect x="724" y="200" width="8" height="9" rx="1"/>
+        <rect x="724" y="212" width="8" height="9" rx="1"/>
+        <rect x="724" y="224" width="8" height="9" rx="1"/>
+      </g>
+      <!-- Latch clip -->
+      <rect x="735" y="140" width="12" height="30" rx="2" fill="#0d2010" stroke="#1a3020" stroke-width="1"/>
+      <!-- Silk label -->
+      <text x="728" y="258" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1a3020" letter-spacing=".04em">ATX_PWR1</text>
+      <!-- Badge ⑥ -->
+      <circle cx="710" cy="88" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="710" y="92" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">6</text>
+
+      <!-- ═══════════════════════════
+           FAN HEADERS (unlabeled)
+           ═══════════════════════════ -->
+      <g>
+        <!-- CPU_FAN -->
+        <rect x="258" y="120" width="28" height="14" rx="2" fill="#0d1a10" stroke="#1a3020" stroke-width="1"/>
+        <g fill="#060e08" stroke="#0f2015" stroke-width=".6">
+          <rect x="261" y="123" width="5" height="8" rx="1"/>
+          <rect x="269" y="123" width="5" height="8" rx="1"/>
+          <rect x="277" y="123" width="5" height="8" rx="1"/>
+        </g>
+        <text x="272" y="144" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">CPU_FAN</text>
+        <!-- SYS_FAN1 -->
+        <rect x="620" y="430" width="22" height="14" rx="2" fill="#0d1a10" stroke="#1a3020" stroke-width="1"/>
+        <g fill="#060e08" stroke="#0f2015" stroke-width=".6">
+          <rect x="623" y="433" width="5" height="8" rx="1"/>
+          <rect x="631" y="433" width="5" height="8" rx="1"/>
+        </g>
+        <text x="631" y="452" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">SYS_FAN</text>
+      </g>
+
+      <!-- ═══════════════════════════
+           USB 3.0 HEADER (unlabeled)
+           ═══════════════════════════ -->
+      <rect x="430" y="440" width="38" height="22" rx="2" fill="#0d1a10" stroke="#1a3020" stroke-width="1.5"/>
+      <g fill="#060e08" stroke="#0f2015" stroke-width=".6">
+        <rect x="433" y="443" width="5" height="6" rx="1"/> <rect x="441" y="443" width="5" height="6" rx="1"/>
+        <rect x="449" y="443" width="5" height="6" rx="1"/> <rect x="457" y="443" width="5" height="6" rx="1"/>
+        <rect x="433" y="452" width="5" height="6" rx="1"/> <rect x="441" y="452" width="5" height="6" rx="1"/>
+        <rect x="449" y="452" width="5" height="6" rx="1"/>
+      </g>
+      <text x="449" y="472" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">USB3_1</text>
+
+      <!-- HD AUDIO HEADER (unlabeled) -->
+      <rect x="340" y="440" width="28" height="22" rx="2" fill="#0d1a10" stroke="#1a3020" stroke-width="1.5"/>
+      <g fill="#060e08" stroke="#0f2015" stroke-width=".6">
+        <rect x="343" y="443" width="5" height="6" rx="1"/> <rect x="351" y="443" width="5" height="6" rx="1"/> <rect x="359" y="443" width="5" height="6" rx="1"/>
+        <rect x="343" y="452" width="5" height="6" rx="1"/> <rect x="351" y="452" width="5" height="6" rx="1"/>
+      </g>
+      <text x="354" y="472" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5.5" fill="#1a3020">AUDIO</text>
+
+      <!-- ═══════════════════════════
+           ⑦ CMOS BATTERY  (~510,385)
+           ═══════════════════════════ -->
+      <circle cx="510" cy="385" r="24" fill="#0d1a0e" stroke="#1a3020" stroke-width="2"/>
+      <circle cx="510" cy="385" r="20" fill="url(#battGrad)" stroke="#604800" stroke-width="1"/>
+      <circle cx="510" cy="385" r="14" fill="#9a7800" opacity=".6"/>
+      <!-- CR2032 center detail -->
+      <circle cx="510" cy="385" r="6" fill="#c8a010" opacity=".8"/>
+      <line x1="507" y1="385" x2="513" y2="385" stroke="#060c07" stroke-width="1.5"/>
+      <line x1="510" y1="382" x2="510" y2="388" stroke="#060c07" stroke-width="1.5"/>
+      <!-- + label -->
+      <text x="524" y="370" font-family="Share Tech Mono,monospace" font-size="8" fill="#9a7800">+</text>
+      <text x="510" y="418" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1a3020">BAT1</text>
+      <!-- Badge ⑦ -->
+      <circle cx="490" cy="363" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="490" y="367" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">7</text>
+
+      <!-- ═══════════════════════════
+           ⑧ FRONT PANEL HEADER  (~125,452)
+           ═══════════════════════════ -->
+      <rect x="92" y="432" width="56" height="30" rx="2" fill="#0d1a10" stroke="#1a4020" stroke-width="1.5"/>
+      <!-- 5×2 pin grid -->
+      <g fill="#1a3020" stroke="#0a1a0c" stroke-width=".5">
+        <rect x="96"  y="436" width="6" height="8" rx="1"/>
+        <rect x="105" y="436" width="6" height="8" rx="1"/>
+        <rect x="114" y="436" width="6" height="8" rx="1"/>
+        <rect x="123" y="436" width="6" height="8" rx="1"/>
+        <rect x="132" y="436" width="6" height="8" rx="1"/>
+        <!-- Bottom row — pin 9 missing (EMPTY key) -->
+        <rect x="96"  y="447" width="6" height="8" rx="1"/>
+        <rect x="105" y="447" width="6" height="8" rx="1"/>
+        <rect x="114" y="447" width="6" height="8" rx="1"/>
+        <!-- pin 9 slot empty (the key pin) -->
+        <rect x="132" y="447" width="6" height="8" rx="1"/>
+      </g>
+      <text x="120" y="471" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#1a3020" letter-spacing=".05em">F_PANEL</text>
+      <!-- Badge ⑧ -->
+      <circle cx="94" cy="434" r="11" fill="#050c07" stroke="#39ff8a" stroke-width="1.5" filter="url(#tinyglow)"/>
+      <text x="94" y="438" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#39ff8a" font-weight="bold">8</text>
+
+      <!-- ═══════════════════════════
+           BOTTOM EDGE LABEL
+           ═══════════════════════════ -->
+      <text x="400" y="494" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7.5" fill="#1a3020" letter-spacing=".12em">ATX FORM FACTOR · REV 2.3 · NOT TO SCALE</text>
+    </svg>
+
+    <!-- ══════════════════════════════════════════
+         DROPDOWN OVERLAYS
+         Positions derived from SVG component centers
+         (left = cx/800 × 100%, top = cy/500 × 100%)
+         ══════════════════════════════════════════ -->
+
+    <!-- ① CPU Socket  (190,195) → 23.8%, 39% -->
+    <div class="drop-zone" style="left:23.8%;top:39%">
+      <select id="sel1" data-answer="CPU Socket (LGA)">
+        <option value="">— select —</option>
+        <option>CPU Socket (LGA)</option>
+        <option>CPU Socket (AM5)</option>
+        <option>Chipset (PCH)</option>
+        <option>VRM Phase Controller</option>
+        <option>CPU Power (8-pin EPS)</option>
+        <option>BGA Socket</option>
+      </select>
+    </div>
+
+    <!-- ② DIMM Slots  (368,155) → 46%, 31% -->
+    <div class="drop-zone" style="left:46%;top:31%">
+      <select id="sel2" data-answer="DIMM Slots (RAM)">
+        <option value="">— select —</option>
+        <option>DIMM Slots (RAM)</option>
+        <option>SO-DIMM Slots</option>
+        <option>PCIe x16 Slots</option>
+        <option>M.2 Slots</option>
+        <option>SATA Ports</option>
+        <option>Front Panel Header</option>
+      </select>
+    </div>
+
+    <!-- ③ PCIe x16  (265,408) → 33.1%, 81.6% -->
+    <div class="drop-zone" style="left:33.1%;top:81.6%">
+      <select id="sel3" data-answer="PCIe x16 Slot">
+        <option value="">— select —</option>
+        <option>PCIe x16 Slot</option>
+        <option>PCIe x1 Slot</option>
+        <option>PCI Slot (Legacy)</option>
+        <option>M.2 Slot</option>
+        <option>DIMM Slots (RAM)</option>
+        <option>AGP Slot</option>
+      </select>
+    </div>
+
+    <!-- ④ M.2 Slot  (548,298) → 68.5%, 59.6% -->
+    <div class="drop-zone" style="left:68.5%;top:59.6%">
+      <select id="sel4" data-answer="M.2 Slot">
+        <option value="">— select —</option>
+        <option>M.2 Slot</option>
+        <option>mSATA Slot</option>
+        <option>PCIe x1 Slot</option>
+        <option>SATA Express Port</option>
+        <option>USB 3.0 Header</option>
+        <option>Mini PCIe Slot</option>
+      </select>
+    </div>
+
+    <!-- ⑤ SATA Ports  (710,350) → 88.8%, 70% -->
+    <div class="drop-zone" style="left:88.8%;top:70%">
+      <select id="sel5" data-answer="SATA Ports">
+        <option value="">— select —</option>
+        <option>SATA Ports</option>
+        <option>eSATA Ports</option>
+        <option>USB 3.0 Headers</option>
+        <option>M.2 Slot</option>
+        <option>Front Panel Header</option>
+        <option>RAID Connector</option>
+      </select>
+    </div>
+
+    <!-- ⑥ 24-pin ATX  (728,165) → 91%, 33% -->
+    <div class="drop-zone" style="left:91%;top:33%">
+      <select id="sel6" data-answer="24-pin ATX Connector">
+        <option value="">— select —</option>
+        <option>24-pin ATX Connector</option>
+        <option>CPU Power (8-pin EPS)</option>
+        <option>PCIe Power (8-pin)</option>
+        <option>20-pin ATX Connector</option>
+        <option>SATA Power Header</option>
+        <option>Front Panel Header</option>
+      </select>
+    </div>
+
+    <!-- ⑦ CMOS Battery  (490,363→badge) → 61.3%, 72.6% -->
+    <div class="drop-zone" style="left:61.3%;top:72.6%">
+      <select id="sel7" data-answer="CMOS Battery (CR2032)">
+        <option value="">— select —</option>
+        <option>CMOS Battery (CR2032)</option>
+        <option>Tantalum Capacitor</option>
+        <option>System Clock Crystal</option>
+        <option>Chipset (Northbridge)</option>
+        <option>Voltage Regulator Module</option>
+        <option>TPM Module</option>
+      </select>
+    </div>
+
+    <!-- ⑧ Front Panel Header  (94,434→badge) → 11.75%, 86.8% -->
+    <div class="drop-zone" style="left:11.75%;top:86.8%">
+      <select id="sel8" data-answer="Front Panel Header">
+        <option value="">— select —</option>
+        <option>Front Panel Header</option>
+        <option>USB 2.0 Header</option>
+        <option>HD Audio Header</option>
+        <option>Fan Header (SYS_FAN)</option>
+        <option>Debug LED Header</option>
+        <option>Thunderbolt Header</option>
+      </select>
+    </div>
+
+  </div><!-- /diagram-wrap -->
+
+  <!-- ── Explanation Panel ── -->
+  <div id="explanations">
+    <h3>// Exam Notes</h3>
+    <div class="exp-item"><span class="exp-num">①</span><span class="exp-text"><strong>CPU Socket (LGA):</strong> Land Grid Array — Intel's socket design where the pins are on the motherboard, not the CPU. AMD uses PGA (pins on CPU) or LGA (AM5+). The socket type determines CPU compatibility. <em>Obj 3.4</em></span></div>
+    <div class="exp-item"><span class="exp-num">②</span><span class="exp-text"><strong>DIMM Slots:</strong> Dual Inline Memory Module slots. ATX boards typically have 2–4 slots. Always consult the QVL (Qualified Vendor List) and install in paired slots (A1+B1) for dual-channel. <em>Obj 3.2</em></span></div>
+    <div class="exp-item"><span class="exp-num">③</span><span class="exp-text"><strong>PCIe x16 Slot:</strong> Primary slot for discrete GPUs. Runs 16 lanes at PCIe 4.0/5.0 speeds. Distinguished from x1 slots by its longer length and latch mechanism on the end. <em>Obj 3.4</em></span></div>
+    <div class="exp-item"><span class="exp-num">④</span><span class="exp-text"><strong>M.2 Slot:</strong> Supports both SATA and NVMe SSDs in M.2 2280 form factor. Key B supports SATA; Key M supports NVMe PCIe. Check the board spec — not all M.2 slots support both protocols. <em>Obj 3.3</em></span></div>
+    <div class="exp-item"><span class="exp-num">⑤</span><span class="exp-text"><strong>SATA Ports:</strong> Serial ATA 3.0 (6 Gb/s). L-shaped connector with no screws required. Commonly used for HDDs, SSDs, and optical drives. The number of ports is controlled by the PCH chipset. <em>Obj 3.3</em></span></div>
+    <div class="exp-item"><span class="exp-num">⑥</span><span class="exp-text"><strong>24-pin ATX Connector:</strong> The main power connector from the PSU to the motherboard. Originally 20-pin (ATX 1.x); extended to 24-pin in ATX 2.x. Without this, the board will not POST. <em>Obj 3.5</em></span></div>
+    <div class="exp-item"><span class="exp-num">⑦</span><span class="exp-text"><strong>CMOS Battery (CR2032):</strong> A 3V lithium coin cell that maintains BIOS/UEFI settings and the real-time clock (RTC) when AC power is removed. A dead CMOS battery causes the system date to reset and may trigger boot errors. <em>Obj 3.4</em></span></div>
+    <div class="exp-item"><span class="exp-num">⑧</span><span class="exp-text"><strong>Front Panel Header:</strong> A 9-pin (10-pin with 1 key) block that connects the case's power button, reset button, HDD LED, and power LED to the motherboard. Miswiring is a common troubleshooting scenario. <em>Obj 3.4</em></span></div>
+  </div>
+
+  <div class="actions">
+    <button id="submitBtn" onclick="checkAnswers()">▶ Submit</button>
+    <button id="resetBtn"  onclick="resetAll()">↺ Reset</button>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+  const EXPLANATIONS_ID = 'explanations';
+
+  function checkAnswers() {
+    const selects = document.querySelectorAll('select[data-answer]');
+    let correct = 0, unanswered = 0;
+
+    selects.forEach(sel => {
+      sel.classList.remove('correct', 'wrong', 'unanswered');
+      if (!sel.value) { unanswered++; sel.classList.add('unanswered'); return; }
+      if (sel.value === sel.dataset.answer) { sel.classList.add('correct'); correct++; }
+      else                                  { sel.classList.add('wrong'); }
+    });
+
+    const total  = selects.length;
+    const result = document.getElementById('result');
+    result.classList.add('show');
+
+    if (unanswered > 0) {
+      result.className = 'show warn';
+      result.textContent = `⚠ ${unanswered} unanswered — label all components`;
+      document.getElementById(EXPLANATIONS_ID).classList.remove('show');
+      return;
+    }
+
+    if (correct === total) {
+      result.className = 'show pass';
+      result.textContent = `✓ ${correct}/${total} — PASS · Excellent!`;
+    } else {
+      result.className = 'show fail';
+      result.textContent = `✗ ${correct}/${total} correct — review red items`;
+    }
+    document.getElementById(EXPLANATIONS_ID).classList.add('show');
+  }
+
+  function resetAll() {
+    document.querySelectorAll('select[data-answer]').forEach(s => {
+      s.value = '';
+      s.classList.remove('correct', 'wrong', 'unanswered');
+    });
+    const result = document.getElementById('result');
+    result.className = '';
+    result.textContent = '';
+    document.getElementById(EXPLANATIONS_ID).classList.remove('show');
+  }
+</script>
+</body>
+</html>
