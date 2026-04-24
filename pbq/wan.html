@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompTIA A+ PBQ — WAN Topology</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b0f14;
+    --panel:     #111720;
+    --border:    #1e3048;
+    --accent:    #00c8ff;
+    --accent2:   #0077aa;
+    --text:      #cde6f5;
+    --muted:     #4a6278;
+    --correct:   #00ff88;
+    --wrong:     #ff3355;
+    --correct-glow: 0 0 0 2px #00ff88, 0 0 14px 4px rgba(0,255,136,.45);
+    --wrong-glow:   0 0 0 2px #ff3355, 0 0 14px 4px rgba(255,51,85,.45);
+    --idle-glow:    0 0 0 1px #1e3048;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--accent);
+    border: 1px solid var(--accent2);
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: #fff;
+    text-shadow: 0 0 24px rgba(0,200,255,.35);
+  }
+  .subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: .04em;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    width: 100%;
+    max-width: 860px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  }
+
+  .instructions {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+    border-left: 3px solid var(--accent2);
+    padding-left: 12px;
+    margin-bottom: 22px;
+    line-height: 1.7;
+  }
+  .instructions span { color: var(--accent); }
+
+  /* ── Diagram wrapper ── */
+  .diagram-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  .diagram-wrap svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* ── Dropdowns ── */
+  .drop-zone {
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+
+  select {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text);
+    background: rgba(11,15,20,.92);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    outline: none;
+    box-shadow: var(--idle-glow);
+    transition: box-shadow .3s, border-color .3s;
+    width: 145px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6278'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    padding-right: 22px;
+  }
+  select:hover { border-color: var(--accent2); }
+  select option { background: #0d1520; }
+
+  select.correct {
+    box-shadow: var(--correct-glow);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  select.wrong {
+    box-shadow: var(--wrong-glow);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+
+  /* ── Footer area ── */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  #submitBtn {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 18px rgba(0,200,255,.3);
+  }
+  #submitBtn:hover {
+    background: #33d9ff;
+    box-shadow: 0 0 28px rgba(0,200,255,.55);
+  }
+
+  #resetBtn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  #resetBtn:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
+  #result {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    display: none;
+    transition: all .3s;
+  }
+  #result.show { display: inline-block; }
+  #result.pass  { background: rgba(0,255,136,.1); border: 1px solid var(--correct); color: var(--correct); }
+  #result.fail  { background: rgba(255,51,85,.1);  border: 1px solid var(--wrong);   color: var(--wrong); }
+
+  /* scan-line texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.04) 2px, rgba(0,0,0,.04) 4px);
+    pointer-events: none;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">CompTIA A+ Core 1 &nbsp;·&nbsp; PBQ Simulator</div>
+  <h1>WAN Topology — Label the Network</h1>
+  <p class="subtitle">// Domain 2.1 · Compare and contrast TCP/IP protocols</p>
+</header>
+
+<div class="card">
+  <p class="instructions">
+    <span>TASK:</span> Identify each numbered component in the WAN diagram below.<br>
+    Select the correct label from each dropdown, then click <span>SUBMIT</span> to check your answers.
+  </p>
+
+  <div class="diagram-wrap" id="diagramWrap">
+
+    <!-- ═══════════════════════════════════════════
+         SVG DIAGRAM  (800 × 460 viewBox)
+         Component positions used by drop-zones:
+           1  ISP Cloud     ~  110, 230
+           2  WAN Router    ~  270, 230
+           3  Firewall      ~  420, 230
+           4  Core Switch   ~  570, 230
+           5  Workstation   ~  700, 140
+           6  WAN Link      ~  185, 170
+         ═══════════════════════════════════════════ -->
+    <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" aria-label="WAN Topology Diagram">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#1e3048"/>
+        </marker>
+        <radialGradient id="cloudGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#172535"/>
+          <stop offset="100%" stop-color="#0d1824"/>
+        </radialGradient>
+        <radialGradient id="internetGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#0d2035"/>
+          <stop offset="100%" stop-color="#091525"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ── Background grid ── -->
+      <rect width="800" height="460" fill="#0b0f14"/>
+      <g stroke="#131d28" stroke-width="1">
+        <line x1="0" y1="0" x2="800" y2="0"/>
+        <line x1="0" y1="460" x2="800" y2="460"/>
+        <!-- vertical grid -->
+        <line x1="100" y1="0" x2="100" y2="460"/>
+        <line x1="200" y1="0" x2="200" y2="460"/>
+        <line x1="300" y1="0" x2="300" y2="460"/>
+        <line x1="400" y1="0" x2="400" y2="460"/>
+        <line x1="500" y1="0" x2="500" y2="460"/>
+        <line x1="600" y1="0" x2="600" y2="460"/>
+        <line x1="700" y1="0" x2="700" y2="460"/>
+        <!-- horizontal grid -->
+        <line x1="0" y1="100" x2="800" y2="100"/>
+        <line x1="0" y1="200" x2="800" y2="200"/>
+        <line x1="0" y1="300" x2="800" y2="300"/>
+        <line x1="0" y1="400" x2="800" y2="400"/>
+      </g>
+
+      <!-- ══════════════════════════
+           CABLES / LINKS
+           ══════════════════════════ -->
+
+      <!-- ISP → Router  (WAN Link — dashed = serial/fiber WAN) -->
+      <line x1="165" y1="230" x2="240" y2="230"
+            stroke="#0077aa" stroke-width="2.5" stroke-dasharray="7 4"
+            marker-end="url(#arr)"/>
+
+      <!-- Router → Firewall -->
+      <line x1="310" y1="230" x2="385" y2="230"
+            stroke="#1e3048" stroke-width="3"
+            marker-end="url(#arr)"/>
+
+      <!-- Firewall → Switch -->
+      <line x1="455" y1="230" x2="535" y2="230"
+            stroke="#1e3048" stroke-width="3"
+            marker-end="url(#arr)"/>
+
+      <!-- Switch → PC 1 (top) -->
+      <polyline points="570,210 570,140 645,140"
+                fill="none" stroke="#1e3048" stroke-width="2"
+                marker-end="url(#arr)"/>
+
+      <!-- Switch → PC 2 (bottom) -->
+      <polyline points="570,250 570,320 645,320"
+                fill="none" stroke="#1e3048" stroke-width="2"
+                marker-end="url(#arr)"/>
+
+      <!-- Switch → Server (far right) -->
+      <line x1="605" y1="230" x2="665" y2="230"
+            stroke="#1e3048" stroke-width="2"
+            marker-end="url(#arr)"/>
+
+      <!-- ══════════════════════════
+           1 · ISP / INTERNET CLOUD
+           ══════════════════════════ -->
+      <ellipse cx="110" cy="230" rx="65" ry="48" fill="url(#internetGrad)" stroke="#0077aa" stroke-width="1.5" filter="url(#glow)"/>
+      <ellipse cx="90"  cy="215" rx="28" ry="20" fill="#0d2035" stroke="#0077aa" stroke-width="1"/>
+      <ellipse cx="128" cy="210" rx="22" ry="16" fill="#0d2035" stroke="#0077aa" stroke-width="1"/>
+      <ellipse cx="118" cy="248" rx="30" ry="18" fill="#0d2035" stroke="#0077aa" stroke-width="1"/>
+      <text x="110" y="234" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#00c8ff">INTERNET</text>
+      <!-- Number badge -->
+      <circle cx="155" cy="197" r="11" fill="#0b0f14" stroke="#00c8ff" stroke-width="1.5"/>
+      <text x="155" y="201" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#00c8ff" font-weight="bold">1</text>
+
+      <!-- WAN Link label badge (on the dashed cable) -->
+      <rect x="167" y="150" width="52" height="20" rx="3" fill="#0b0f14" stroke="#0077aa" stroke-width="1"/>
+      <text x="193" y="164" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#0077aa">WAN LINK</text>
+      <circle cx="162" cy="160" r="11" fill="#0b0f14" stroke="#0077aa" stroke-width="1.5"/>
+      <text x="162" y="164" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#0077aa" font-weight="bold">6</text>
+      <!-- Pointer line from badge to cable -->
+      <line x1="193" y1="170" x2="193" y2="226" stroke="#0077aa" stroke-width="1" stroke-dasharray="3 3"/>
+
+      <!-- ══════════════════════════
+           2 · WAN ROUTER
+           ══════════════════════════ -->
+      <rect x="241" y="206" width="68" height="48" rx="5" fill="#111e2e" stroke="#1e4060" stroke-width="1.5"/>
+      <!-- router icon (cylinder slices) -->
+      <ellipse cx="275" cy="216" rx="26" ry="8" fill="#0d2840" stroke="#1e4060" stroke-width="1"/>
+      <rect x="249" y="215" width="52" height="18" fill="#0d2840"/>
+      <ellipse cx="275" cy="233" rx="26" ry="8" fill="#0d2840" stroke="#1e4060" stroke-width="1"/>
+      <!-- LEDs -->
+      <circle cx="258" cy="244" r="3" fill="#00ff88" opacity=".8"/>
+      <circle cx="267" cy="244" r="3" fill="#00ff88" opacity=".5"/>
+      <circle cx="276" cy="244" r="3" fill="#ffaa00" opacity=".8"/>
+      <text x="275" y="249" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#4a6278"> </text>
+      <!-- Badge -->
+      <circle cx="241" cy="206" r="11" fill="#0b0f14" stroke="#00c8ff" stroke-width="1.5"/>
+      <text x="241" y="210" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#00c8ff" font-weight="bold">2</text>
+
+      <!-- ══════════════════════════
+           3 · FIREWALL
+           ══════════════════════════ -->
+      <rect x="386" y="202" width="68" height="56" rx="5" fill="#1e1208" stroke="#5a3010" stroke-width="1.5"/>
+      <!-- flame icon hint -->
+      <text x="420" y="234" text-anchor="middle" font-size="24" fill="#ff6600" font-family="serif" opacity=".7">🔥</text>
+      <rect x="390" y="245" width="60" height="8" rx="2" fill="#2a1a08" stroke="#5a3010" stroke-width="1"/>
+      <rect x="392" y="247" width="12" height="4" rx="1" fill="#ff6600" opacity=".8"/>
+      <rect x="408" y="247" width="12" height="4" rx="1" fill="#ff3300" opacity=".6"/>
+      <!-- Badge -->
+      <circle cx="386" cy="202" r="11" fill="#0b0f14" stroke="#00c8ff" stroke-width="1.5"/>
+      <text x="386" y="206" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#00c8ff" font-weight="bold">3</text>
+
+      <!-- ══════════════════════════
+           4 · LAYER 2 SWITCH
+           ══════════════════════════ -->
+      <rect x="536" y="205" width="68" height="50" rx="4" fill="#0e1e12" stroke="#1a4022" stroke-width="1.5"/>
+      <!-- port grid -->
+      <g fill="#00ff88" opacity=".7">
+        <rect x="543" y="213" width="7" height="10" rx="1"/>
+        <rect x="553" y="213" width="7" height="10" rx="1"/>
+        <rect x="563" y="213" width="7" height="10" rx="1"/>
+        <rect x="573" y="213" width="7" height="10" rx="1"/>
+        <rect x="583" y="213" width="7" height="10" rx="1"/>
+        <rect x="593" y="213" width="7" height="10" rx="1"/>
+        <rect x="543" y="227" width="7" height="10" rx="1" opacity=".4"/>
+        <rect x="553" y="227" width="7" height="10" rx="1"/>
+        <rect x="563" y="227" width="7" height="10" rx="1" opacity=".4"/>
+        <rect x="573" y="227" width="7" height="10" rx="1"/>
+        <rect x="583" y="227" width="7" height="10" rx="1" opacity=".3"/>
+        <rect x="593" y="227" width="7" height="10" rx="1"/>
+      </g>
+      <text x="570" y="250" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7.5" fill="#1a4022">SWITCH</text>
+      <!-- Badge -->
+      <circle cx="536" cy="205" r="11" fill="#0b0f14" stroke="#00c8ff" stroke-width="1.5"/>
+      <text x="536" y="209" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#00c8ff" font-weight="bold">4</text>
+
+      <!-- ══════════════════════════
+           5 · WORKSTATION (top)
+           ══════════════════════════ -->
+      <!-- Monitor -->
+      <rect x="646" y="112" width="52" height="38" rx="3" fill="#0d1520" stroke="#1e3048" stroke-width="1.5"/>
+      <rect x="649" y="115" width="46" height="30" rx="2" fill="#080f18"/>
+      <!-- screen content -->
+      <line x1="653" y1="120" x2="691" y2="120" stroke="#00c8ff" stroke-width="1" opacity=".5"/>
+      <line x1="653" y1="125" x2="680" y2="125" stroke="#00c8ff" stroke-width="1" opacity=".3"/>
+      <line x1="653" y1="130" x2="685" y2="130" stroke="#00c8ff" stroke-width="1" opacity=".3"/>
+      <!-- Stand -->
+      <rect x="668" y="150" width="8" height="8" fill="#1e3048"/>
+      <rect x="660" y="157" width="24" height="4" rx="2" fill="#1e3048"/>
+      <!-- Keyboard hint -->
+      <rect x="651" y="163" width="42" height="10" rx="2" fill="#0d1520" stroke="#1e3048" stroke-width="1"/>
+      <!-- Badge -->
+      <circle cx="646" cy="112" r="11" fill="#0b0f14" stroke="#00c8ff" stroke-width="1.5"/>
+      <text x="646" y="116" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="#00c8ff" font-weight="bold">5</text>
+
+      <!-- ══════════════════════════
+           PC 2 (bottom — unlabeled, decorative)
+           ══════════════════════════ -->
+      <rect x="646" y="293" width="52" height="38" rx="3" fill="#0d1520" stroke="#1e3048" stroke-width="1.5"/>
+      <rect x="649" y="296" width="46" height="30" rx="2" fill="#080f18"/>
+      <line x1="653" y1="301" x2="691" y2="301" stroke="#00c8ff" stroke-width="1" opacity=".4"/>
+      <line x1="653" y1="306" x2="678" y2="306" stroke="#00c8ff" stroke-width="1" opacity=".25"/>
+      <rect x="668" y="331" width="8" height="8" fill="#1e3048"/>
+      <rect x="660" y="338" width="24" height="4" rx="2" fill="#1e3048"/>
+      <rect x="651" y="344" width="42" height="10" rx="2" fill="#0d1520" stroke="#1e3048" stroke-width="1"/>
+      <text x="672" y="314" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1e3048">PC</text>
+
+      <!-- ══════════════════════════
+           SERVER (right of switch)
+           ══════════════════════════ -->
+      <rect x="666" y="208" width="48" height="44" rx="3" fill="#131a24" stroke="#1e3048" stroke-width="1.5"/>
+      <rect x="670" y="212" width="40" height="8"  rx="2" fill="#0d1520" stroke="#1e3048" stroke-width="1"/>
+      <rect x="670" y="223" width="40" height="8"  rx="2" fill="#0d1520" stroke="#1e3048" stroke-width="1"/>
+      <rect x="670" y="234" width="40" height="8"  rx="2" fill="#0d1520" stroke="#1e3048" stroke-width="1"/>
+      <circle cx="703" cy="216" r="2.5" fill="#00ff88" opacity=".8"/>
+      <circle cx="703" cy="227" r="2.5" fill="#ffaa00" opacity=".8"/>
+      <circle cx="703" cy="238" r="2.5" fill="#00ff88" opacity=".6"/>
+      <text x="690" y="248" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1e3048">SERVER</text>
+
+      <!-- ── Zone labels ── -->
+      <text x="110" y="290" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#0077aa" letter-spacing=".08em">WAN SIDE</text>
+      <line x1="30"  y1="296" x2="190" y2="296" stroke="#0077aa" stroke-width=".5" stroke-dasharray="4 3"/>
+
+      <text x="640" y="400" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#1a4022" letter-spacing=".08em">LAN SIDE</text>
+      <line x1="450" y1="406" x2="780" y2="406" stroke="#1a4022" stroke-width=".5" stroke-dasharray="4 3"/>
+    </svg>
+
+    <!-- ══════════════════════════════
+         DROP-ZONE OVERLAYS
+         Percentages map to SVG viewBox
+         ══════════════════════════════ -->
+
+    <!-- 1: ISP Cloud  (cx=110, cy=230)  → 110/800, 230/460 -->
+    <div class="drop-zone" style="left:13.75%;top:64%" id="dz1">
+      <select id="sel1" data-answer="Internet / ISP">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>DNS Server</option>
+        <option>Modem</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>Workstation</option>
+      </select>
+    </div>
+
+    <!-- 2: WAN Router  (cx=275, cy=230) → 275/800, 230/460 -->
+    <div class="drop-zone" style="left:34.4%;top:64%" id="dz2">
+      <select id="sel2" data-answer="WAN Router">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>Hub</option>
+        <option>Modem</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>DHCP Server</option>
+      </select>
+    </div>
+
+    <!-- 3: Firewall  (cx=420, cy=230) → 420/800, 230/460 -->
+    <div class="drop-zone" style="left:52.5%;top:64%" id="dz3">
+      <select id="sel3" data-answer="Firewall">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>Hub</option>
+        <option>Modem</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>Workstation</option>
+      </select>
+    </div>
+
+    <!-- 4: Layer 2 Switch  (cx=570, cy=230) → 570/800, 230/460 -->
+    <div class="drop-zone" style="left:71.3%;top:64%" id="dz4">
+      <select id="sel4" data-answer="Layer 2 Switch">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>Hub</option>
+        <option>DHCP Server</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>Workstation</option>
+      </select>
+    </div>
+
+    <!-- 5: Workstation  (cx=672, cy=140) → 672/800, 140/460 -->
+    <div class="drop-zone" style="left:84%;top:30%" id="dz5">
+      <select id="sel5" data-answer="Workstation">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>Hub</option>
+        <option>DNS Server</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>Workstation</option>
+      </select>
+    </div>
+
+    <!-- 6: WAN Link  (badge at 162,160) → 162/800, 160/460 -->
+    <div class="drop-zone" style="left:20.3%;top:34%" id="dz6">
+      <select id="sel6" data-answer="WAN Link (T1/Fiber)">
+        <option value="">— select —</option>
+        <option>Internet / ISP</option>
+        <option>WAN Router</option>
+        <option>Ethernet Cable</option>
+        <option>Modem</option>
+        <option>Firewall</option>
+        <option>WAN Link (T1/Fiber)</option>
+        <option>Layer 2 Switch</option>
+        <option>Workstation</option>
+      </select>
+    </div>
+
+  </div><!-- /diagram-wrap -->
+
+  <div class="actions">
+    <button id="submitBtn" onclick="checkAnswers()">▶ Submit</button>
+    <button id="resetBtn"  onclick="resetAll()">↺ Reset</button>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+  function checkAnswers() {
+    const selects = document.querySelectorAll('select[data-answer]');
+    let correct = 0;
+    let unanswered = 0;
+
+    selects.forEach(sel => {
+      const chosen = sel.value;
+      const answer = sel.dataset.answer;
+
+      if (!chosen) {
+        unanswered++;
+        sel.classList.remove('correct', 'wrong');
+        return;
+      }
+
+      sel.classList.remove('correct', 'wrong');
+      if (chosen === answer) {
+        sel.classList.add('correct');
+        correct++;
+      } else {
+        sel.classList.add('wrong');
+      }
+    });
+
+    const total    = selects.length;
+    const answered = total - unanswered;
+    const result   = document.getElementById('result');
+    result.classList.add('show');
+
+    if (unanswered > 0) {
+      result.className = 'show fail';
+      result.textContent = `⚠ ${unanswered} unanswered — complete all labels`;
+    } else if (correct === total) {
+      result.className = 'show pass';
+      result.textContent = `✓ ${correct}/${total} CORRECT — PASS`;
+    } else {
+      result.className = 'show fail';
+      result.textContent = `✗ ${correct}/${total} correct — review red items`;
+    }
+  }
+
+  function resetAll() {
+    document.querySelectorAll('select[data-answer]').forEach(sel => {
+      sel.value = '';
+      sel.classList.remove('correct', 'wrong');
+    });
+    const result = document.getElementById('result');
+    result.className = '';
+    result.textContent = '';
+  }
+</script>
+</body>
+</html>
