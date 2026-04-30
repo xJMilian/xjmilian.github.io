@@ -586,6 +586,137 @@ body {
 @media (max-width: 600px) {
   .logo-sub { display: none; }
 }
+
+/* INFO MODAL */
+.info-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+.info-btn:hover {
+  opacity: 1;
+  background: var(--accent3);
+}
+.info-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.info-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11, 15, 26, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.info-modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.info-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+.info-modal-overlay.open .info-modal {
+  transform: translateY(0);
+}
+.info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.info-modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.info-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.info-modal-close:hover {
+  color: var(--accent);
+}
+.info-modal-body {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.info-modal-body::-webkit-scrollbar { width: 4px; }
+.info-modal-body::-webkit-scrollbar-track { background: transparent; }
+.info-modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.kb-entry h4 {
+  font-family: 'Barlow Condensed', sans-serif;
+  color: var(--accent);
+  font-size: 16px;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.kb-entry h4:first-child { margin-top: 0; }
+.kb-entry p { margin-bottom: 12px; }
+.kb-entry ul {
+  list-style: none;
+  margin-bottom: 12px;
+  padding-left: 0;
+}
+.kb-entry ul li {
+  position: relative;
+  padding-left: 14px;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.kb-entry ul li::before {
+  content: '•';
+  position: absolute; left: 0;
+  color: var(--accent2);
+  font-size: 12px;
+}
+.kb-entry strong { color: var(--text-bright); }
+.kb-tip {
+  background: var(--accent3);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-top: 16px;
+  font-size: 13px;
+}
 </style>
 </head>
 <body>
@@ -3431,6 +3562,19 @@ www.professormesser.com. 300  IN A  104.22.73.108
 </main>
 </div>
 
+<!-- INFO MODAL -->
+<div class="info-modal-overlay" id="info-modal-overlay">
+  <div class="info-modal">
+    <div class="info-modal-header">
+      <div class="info-modal-title" id="info-modal-title">Topic Info</div>
+      <button class="info-modal-close" id="info-modal-close" title="Close">✕</button>
+    </div>
+    <div class="info-modal-body" id="info-modal-body">
+      Detailed information about this topic will appear here.
+    </div>
+  </div>
+</div>
+
 <button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
 
 <script>
@@ -3567,6 +3711,76 @@ document.addEventListener('keydown', e => {
     clearSearch();
     document.getElementById('search-input').blur();
   }
+});
+
+// Info Modal Logic
+document.addEventListener('DOMContentLoaded', () => {
+  const modalOverlay = document.getElementById('info-modal-overlay');
+  const modalTitle = document.getElementById('info-modal-title');
+  const modalBody = document.getElementById('info-modal-body');
+  const modalClose = document.getElementById('info-modal-close');
+
+  // Inject info buttons
+  document.querySelectorAll('.topic-title').forEach(titleEl => {
+    const btn = document.createElement('button');
+    btn.className = 'info-btn';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    btn.title = "Show more info here!";
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      openInfoModal(titleEl.textContent.trim());
+    };
+    titleEl.appendChild(btn);
+  });
+
+  let topicData = null;
+
+  async function fetchTopicData() {
+    if (topicData) return topicData;
+    try {
+      const response = await fetch('data.json');
+      if (!response.ok) throw new Error('Network response was not ok');
+      topicData = await response.json();
+      return topicData;
+    } catch (error) {
+      console.error('Failed to load topic data:', error);
+      return {};
+    }
+  }
+
+  async function openInfoModal(topicName) {
+    // Open modal immediately with a loading state
+    modalTitle.textContent = topicName;
+    modalBody.innerHTML = `<p style="color:var(--text-dim);">Loading...</p>`;
+    modalOverlay.classList.add('open');
+
+    // Fetch the data
+    const data = await fetchTopicData();
+    const info = data[topicName];
+
+    // Update modal body based on the JSON response
+    if (info) {
+      modalBody.innerHTML = info;
+    } else {
+      modalBody.innerHTML = `<p>Detailed information about <strong>${topicName}</strong> will appear here.</p><br><p style="color:var(--text-dim);font-size:12px;">(No data found in data.json for this topic.)</p>`;
+    }
+  }
+
+  function closeInfoModal() {
+    modalOverlay.classList.remove('open');
+  }
+
+  modalClose.onclick = closeInfoModal;
+  modalOverlay.onclick = (e) => {
+    if (e.target === modalOverlay) closeInfoModal();
+  };
+  
+  // Close modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('open')) {
+      closeInfoModal();
+    }
+  });
 });
 </script>
 </body>
