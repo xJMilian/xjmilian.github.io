@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPv6 Shortening Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #09090b;
+  --bg-panel: rgba(24, 24, 27, 0.6);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.5);
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --success: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+header {
+  height: 70px;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px;
+  z-index: 10;
+  position: sticky;
+  top: 0;
+}
+
+.brand {
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.brand span {
+  font-weight: 400;
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
+  font-size: 18px;
+}
+
+main {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+.input-section {
+  background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.input-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.input-subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.input-section input {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border);
+  color: var(--text-main);
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-family: 'Fira Code', monospace;
+  font-size: 20px;
+  outline: none;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.input-section input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.input-section input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+#results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 60px;
+}
+
+.step-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.step-card:nth-child(1) { animation-delay: 0.1s; }
+.step-card:nth-child(2) { animation-delay: 0.2s; }
+.step-card:nth-child(3) { animation-delay: 0.3s; }
+.step-card:nth-child(4) { animation-delay: 0.4s; }
+.step-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.step-number {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.step-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.step-desc {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.step-desc code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+.step-code {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  font-family: 'Fira Code', monospace;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.code-before {
+  color: var(--text-muted);
+}
+
+.code-arrow {
+  color: var(--accent);
+  margin: 16px 0;
+  font-size: 24px;
+}
+
+.code-after {
+  color: #60a5fa;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+}
+
+.final-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+}
+
+.final-code {
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 28px;
+  padding: 32px;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.empty-state, .error-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: var(--bg-panel);
+  border-radius: 16px;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.error-state {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.example-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s;
+  font-family: 'Outfit';
+}
+
+.example-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+    IPv6 <span>/ Shortening Tool</span>
+  </div>
+</header>
+
+<main>
+  <div class="input-section">
+    <div class="input-title">Enter an IPv6 Address</div>
+    <div class="input-subtitle">Paste an address below to see a step-by-step breakdown of how it gets shortened.</div>
+    <input type="text" id="ip-input" placeholder="e.g. fe80:0000:0000:0000:02d3:cfff:0ed5:0000" oninput="updateUI()" autocomplete="off" spellcheck="false">
+    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+      <button class="example-btn" style="margin-top: 0;" onclick="loadExample()">Load Example</button>
+      <button class="example-btn" style="margin-top: 0;" onclick="generateRandom()">Generate Random</button>
+    </div>
+  </div>
+
+  <div id="results-container">
+    <div class="empty-state">
+      Type an IPv6 address above to begin the breakdown.
+    </div>
+  </div>
+</main>
+
+<script>
+function loadExample() {
+  const input = document.getElementById('ip-input');
+  input.value = "fe80:0000:0000:0000:02d3:cfff:0ed5:0000";
+  updateUI();
+}
+
+function generateRandom() {
+  const hexChars = "0123456789abcdef";
+  let blocks = [];
+  
+  // Decide randomly to have a sequence of zeros to test Step 1
+  let zeroCount = Math.floor(Math.random() * 4); // 0 to 3 zeros
+  let zeroStartIndex = Math.floor(Math.random() * (8 - zeroCount));
+  
+  for (let i = 0; i < 8; i++) {
+    if (zeroCount > 0 && i >= zeroStartIndex && i < zeroStartIndex + zeroCount) {
+      blocks.push("0000");
+    } else {
+      // Randomize whether a block has leading zeros to test Step 2
+      if (Math.random() > 0.5) {
+        // Generates a small number padded to 4 chars with zeros (e.g. 00a3)
+        let val = Math.floor(Math.random() * 255).toString(16);
+        blocks.push(val.padStart(4, '0'));
+      } else {
+        // Generates a full 4 char hex block
+        let block = "";
+        for (let j = 0; j < 4; j++) {
+          block += hexChars[Math.floor(Math.random() * 16)];
+        }
+        blocks.push(block);
+      }
+    }
+  }
+  
+  const input = document.getElementById('ip-input');
+  input.value = blocks.join(":");
+  updateUI();
+}
+
+function expandIPv6(ip) {
+    ip = ip.trim().toLowerCase();
+    
+    // Handle "::" alone
+    if (ip === "::") return "0000:0000:0000:0000:0000:0000:0000:0000";
+    
+    let parts = ip.split('::');
+    if (parts.length > 2) return null; // Invalid, multiple ::
+    
+    let left = parts[0] ? parts[0].split(':') : [];
+    let right = parts.length === 2 && parts[1] ? parts[1].split(':') : [];
+    
+    if (parts.length === 1) {
+        if (left.length !== 8) return null;
+        return left.map(p => p.padStart(4, '0')).join(':');
+    }
+    
+    let missing = 8 - (left.length + right.length);
+    if (missing < 0) return null;
+    
+    let middle = Array(missing).fill('0000');
+    
+    let full = [...left, ...middle, ...right];
+    return full.map(p => p.padStart(4, '0')).join(':');
+}
+
+function processIPv6(inputIp) {
+    let expanded = expandIPv6(inputIp);
+    if (!expanded) return null;
+    
+    let parts = expanded.split(':');
+    if (parts.length !== 8) return null;
+    
+    let hexRegex = /^[0-9a-f]{4}$/;
+    for (let p of parts) {
+        if (!hexRegex.test(p)) return null;
+    }
+    
+    let original = parts.join(':');
+    
+    // Step 1: Find longest sequence of '0000'
+    let maxRun = 0;
+    let maxRunIndex = -1;
+    let currentRun = 0;
+    let currentRunIndex = -1;
+    
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i] === '0000') {
+            if (currentRun === 0) currentRunIndex = i;
+            currentRun++;
+        } else {
+            if (currentRun > maxRun) {
+                maxRun = currentRun;
+                maxRunIndex = currentRunIndex;
+            }
+            currentRun = 0;
+        }
+    }
+    if (currentRun > maxRun) {
+        maxRun = currentRun;
+        maxRunIndex = currentRunIndex;
+    }
+    
+    let step1String = original;
+    let hasStep1 = false;
+    let step2Parts = [...parts];
+    
+    if (maxRun > 1) { 
+        hasStep1 = true;
+        let temp = [...parts];
+        temp.splice(maxRunIndex, maxRun, 'DOUBLE_COLON');
+        step1String = temp.join(':').replace(':DOUBLE_COLON:', '::').replace('DOUBLE_COLON:', '::').replace(':DOUBLE_COLON', '::');
+        if (step1String === 'DOUBLE_COLON') step1String = '::';
+        
+        step2Parts.splice(maxRunIndex, maxRun, 'DOUBLE_COLON');
+    }
+    
+    // Step 2: Remove leading zeros
+    let hasStep2 = false;
+    let step2Temp = step2Parts.map(p => {
+        if (p === 'DOUBLE_COLON') return p;
+        if (p === '0000') return p; 
+        
+        let stripped = p.replace(/^0+/, '');
+        if (stripped === '') stripped = '0'; 
+        if (stripped !== p) hasStep2 = true;
+        return stripped;
+    });
+    
+    let step2String = step2Temp.join(':').replace(':DOUBLE_COLON:', '::').replace('DOUBLE_COLON:', '::').replace(':DOUBLE_COLON', '::');
+    
+    // Step 3: Replace remaining '0000' with '0'
+    let hasStep3 = false;
+    let step3Temp = step2Temp.map(p => {
+        if (p === 'DOUBLE_COLON') return p;
+        if (p === '0000') {
+            hasStep3 = true;
+            return '0';
+        }
+        return p;
+    });
+    
+    let step3String = step3Temp.join(':').replace(':DOUBLE_COLON:', '::').replace('DOUBLE_COLON:', '::').replace(':DOUBLE_COLON', '::');
+    if (step3String === '::') step3String = '::';
+
+    let finalString = step3String;
+
+    return {
+        original,
+        step1: step1String,
+        step2: step2String,
+        step3: step3String,
+        final: finalString,
+        hasStep1, hasStep2, hasStep3
+    };
+}
+
+function updateUI() {
+    const input = document.getElementById('ip-input').value;
+    const container = document.getElementById('results-container');
+    
+    if (!input.trim()) {
+        container.innerHTML = '<div class="empty-state">Type an IPv6 address above to begin the breakdown.</div>';
+        return;
+    }
+    
+    const result = processIPv6(input);
+    if (!result) {
+        container.innerHTML = '<div class="error-state"><strong>Invalid IPv6 Format</strong><br><br>Please check your input. Ensure it contains valid hexadecimal characters separated by colons.</div>';
+        return;
+    }
+    
+    let html = `
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2)">Start</div>
+          <div class="step-title">Expanded Address</div>
+        </div>
+        <div class="step-desc">First, we ensure the address is fully expanded into its 8 blocks (hextets) of 4 hexadecimal characters.</div>
+        <div class="step-code">
+          <div class="code-after">${result.original}</div>
+        </div>
+      </div>
+    `;
+    
+    html += buildStepCard(
+      1, 
+      "Replace Consecutive Groups of Zeros", 
+      "The longest continuous sequence of 16-bit blocks set to 0 is replaced with a double colon (<code>::</code>). This can only be done <strong>one time</strong>!",
+      result.original, 
+      result.step1, 
+      result.hasStep1
+    );
+
+    html += buildStepCard(
+      2, 
+      "Remove Leading Zeros", 
+      "In any remaining block, leading zeros are removed. For example, <code>02d3</code> becomes <code>2d3</code>.",
+      result.hasStep1 ? result.step1 : result.original, 
+      result.step2, 
+      result.hasStep2
+    );
+
+    html += buildStepCard(
+      3, 
+      "Leftover Octets of Full Zeroes", 
+      "Any remaining blocks that are completely full of zeroes (<code>0000</code>) are shortened to a single <code>0</code>.",
+      result.hasStep2 ? result.step2 : (result.hasStep1 ? result.step1 : result.original), 
+      result.step3, 
+      result.hasStep3
+    );
+    
+    html += `
+      <div class="step-card final-card">
+        <div class="step-header">
+          <div class="step-title" style="color: white; font-size: 24px;">Final Shortened Address</div>
+        </div>
+        <div class="step-code final-code">
+          ${result.final}
+        </div>
+      </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function buildStepCard(stepNum, title, desc, before, after, hasChange) {
+    if (!hasChange) {
+        return `
+          <div class="step-card">
+            <div class="step-header">
+              <div class="step-number">Step ${stepNum}</div>
+              <div class="step-title">${title}</div>
+            </div>
+            <div class="step-desc">${desc}</div>
+            <div class="step-code" style="opacity: 0.6;">
+              <div class="code-before">No changes needed for this step.</div>
+            </div>
+          </div>
+        `;
+    }
+    
+    return `
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">Step ${stepNum}</div>
+          <div class="step-title">${title}</div>
+        </div>
+        <div class="step-desc">${desc}</div>
+        <div class="step-code">
+          <div class="code-before">${before}</div>
+          <div class="code-arrow">↓</div>
+          <div class="code-after">${after}</div>
+        </div>
+      </div>
+    `;
+}
+</script>
+</body>
+</html>
