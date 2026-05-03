@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBQ Simulator | CompTIA A+ Core 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0f1a;
+  --bg2: #111827;
+  --bg3: #1a2236;
+  --border: #1e2d47;
+  --accent: #00c8ff;
+  --accent2: #0084a8;
+  --accent3: #00c8ff22;
+  --text: #cdd6f4;
+  --text-dim: #6e7f9e;
+  --text-bright: #e8eaf6;
+  --success: #10b981;
+  --error: #ef4444;
+  --sidebar-width: 280px;
+  --header-height: 56px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--header-height);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; padding: 0 20px;
+  backdrop-filter: blur(10px);
+}
+.logo-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+.logo-sub { color: var(--text-dim); font-weight: 400; }
+
+#app {
+  display: flex;
+  padding-top: var(--header-height);
+  min-height: 100vh;
+}
+
+#sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: var(--header-height);
+  left: 0; bottom: 0;
+  overflow-y: auto;
+}
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.nav-header {
+  padding: 14px 16px 8px;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.nav-item {
+  display: block;
+  padding: 10px 16px;
+  text-decoration: none;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent3);
+}
+
+#main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  padding-bottom: 60px;
+}
+
+#cover {
+  min-height: 180px;
+  background: linear-gradient(135deg, var(--bg2) 0%, #0a1628 50%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; text-align: center;
+  padding: 30px 24px;
+}
+.cover-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  color: var(--accent); letter-spacing: 2px;
+  background: var(--accent3); border: 1px solid var(--accent);
+  padding: 4px 14px; border-radius: 100px; margin-bottom: 10px;
+}
+.cover-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 800;
+  color: var(--text-bright);
+}
+.cover-title span { color: var(--accent); }
+.cover-sub { font-size: 15px; color: var(--text-dim); margin-top: 10px; }
+
+.pbq-container {
+  padding: 32px 40px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.pbq-container.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.section-header {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 16px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  padding: 3px 8px; border-radius: 4px;
+  background: var(--bg3); color: var(--accent);
+}
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 700; color: var(--text-bright);
+}
+.pbq-desc {
+  font-size: 14px; color: var(--text-dim); line-height: 1.6;
+  margin-bottom: 24px; padding: 16px;
+  background: var(--bg2); border-radius: 8px; border: 1px solid var(--border);
+}
+
+/* DRAG AND DROP STYLES */
+.drag-drop-grid { display: grid; gap: 24px; margin-bottom: 24px; }
+.drag-drop-grid.two-col { grid-template-columns: 1fr 1.5fr; }
+.drag-drop-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+
+.drag-pool, .drop-zones {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.drag-pool-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; color: var(--text-bright);
+  margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;
+}
+
+.draggable {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 4px;
+  cursor: grab;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: inline-block;
+  user-select: none;
+  transition: transform 0.1s;
+}
+.draggable:active { cursor: grabbing; transform: scale(0.98); }
+.draggable.dragging { opacity: 0.5; }
+
+.drop-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.drop-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 600; color: var(--text-bright);
+  text-align: right; line-height: 1.2;
+}
+.drop-zone {
+  flex: 1; min-height: 44px;
+  background: rgba(0,0,0,0.2); border: 2px dashed var(--border); border-radius: 6px;
+  display: flex; align-items: center; justify-content: flex-start; padding: 4px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.drop-zone.drag-over { border-color: var(--accent); background: var(--accent3); }
+.drop-zone .draggable { margin-bottom: 0; width: 100%; border-left: none; text-align: center; }
+
+/* Grid specific zones (Ports) */
+.port-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.port-cell { display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.2); padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.port-cell .drop-label { text-align: center; font-size: 18px; color: var(--accent); }
+
+/* Printer visual grid */
+.printer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.symptom-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.img-placeholder { height: 120px; background: var(--bg3); border: 1px dashed var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 12px; font-family: monospace; }
+.symptom-text { font-size: 14px; font-weight: 600; color: var(--text-bright); }
+
+/* Cable Colors */
+.wire-ow { border-left-color: #fbd38d !important; color: #fbd38d !important; }
+.wire-o { border-left-color: #f6ad55 !important; color: #f6ad55 !important; }
+.wire-gw { border-left-color: #9ae6b4 !important; color: #9ae6b4 !important; }
+.wire-b { border-left-color: #63b3ed !important; color: #63b3ed !important; }
+.wire-bw { border-left-color: #90cdf4 !important; color: #90cdf4 !important; }
+.wire-g { border-left-color: #48bb78 !important; color: #48bb78 !important; }
+.wire-brw { border-left-color: #d6bcfa !important; color: #d6bcfa !important; }
+.wire-br { border-left-color: #9f7aea !important; color: #9f7aea !important; }
+
+/* Custom Inputs (Terminal / Windows Mockups) */
+.terminal-window {
+  background: #000; border: 1px solid #333; border-radius: 8px; padding: 20px;
+  font-family: 'IBM Plex Mono', monospace; color: #ccc; min-height: 200px; margin-bottom: 24px;
+}
+.terminal-input { background: transparent; border: none; color: #fff; font-family: inherit; font-size: 14px; width: 80%; outline: none; }
+.terminal-output { color: #fff; margin-top: 8px; margin-bottom: 8px; }
+
+.windows-mockup {
+  background: #f0f0f0; border: 1px solid #999; border-radius: 4px; padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; width: 500px; margin: 0 auto 24px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.windows-title { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 16px; font-weight: 600; }
+.windows-radio-group { margin-bottom: 16px; }
+.windows-radio-group label { display: block; margin-bottom: 8px; font-size: 13px; cursor: pointer; }
+
+/* Forms */
+.pbq-form select {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text-bright);
+  padding: 10px 14px; border-radius: 6px; font-family: inherit; font-size: 14px; outline: none; width: 100%;
+}
+.scenario-select { margin-bottom: 24px; max-width: 400px; }
+
+/* RAID Table */
+.raid-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+.raid-table th, .raid-table td { padding: 12px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
+.raid-table th { background: var(--bg2); color: var(--accent); }
+
+/* Motherboard */
+.mobo-container { position: relative; width: 600px; height: 600px; margin: 0 auto; background: #2a3b2c; border: 4px solid #1a241a; border-radius: 8px; overflow: hidden; }
+.mobo-drop { position: absolute; background: rgba(0,0,0,0.4); border: 2px dashed var(--accent); display: flex; align-items: center; justify-content: center; border-radius: 4px; z-index: 10; }
+.mobo-drop.drag-over { border-color: #fff; background: rgba(255,255,255,0.2); }
+.mobo-drop .draggable { width: 90%; height: 80%; display: flex; align-items: center; justify-content: center; font-size: 11px; margin: 0; padding: 0; }
+
+/* Buttons */
+.action-bar { display: flex; gap: 12px; padding-top: 20px; border-top: 1px solid var(--border); }
+.btn { padding: 10px 20px; border-radius: 6px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #38bdf8; }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+
+/* Feedback */
+.feedback-msg { display: none; padding: 12px 16px; border-radius: 6px; margin-top: 16px; font-size: 14px; }
+.feedback-success { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); }
+.feedback-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); }
+
+.drop-zone.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
+.drop-zone.correct .draggable { color: var(--success); }
+.drop-zone.incorrect { border-color: var(--error); background: rgba(239, 68, 68, 0.05); }
+.drop-zone.incorrect .draggable { color: var(--error); }
+.mobo-drop.correct { border-color: var(--success); }
+.mobo-drop.incorrect { border-color: var(--error); }
+</style>
+</head>
+<body>
+<header id="header">
+  <div class="logo-text">Professor Messer's <span class="logo-sub">PBQ Simulator</span></div>
+  <a href="index.html" style="margin-left: auto; color: var(--accent); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px;"><span>←</span> Back to Notes</a>
+</header>
+
+<div id="app">
+  <nav id="sidebar">
+    <div class="nav-header">PBQ Scenarios</div>
+    <div style="padding:8px 12px 4px;">
+      <a class="nav-item active" onclick="showPBQ('pbq-ports', this)">1. Network Port Matching</a>
+      <a class="nav-item" onclick="showPBQ('pbq-cable', this)">2. Cable Crimping & Types</a>
+      <a class="nav-item" onclick="showPBQ('pbq-printer', this)">3. Laser Printer Issues</a>
+      <a class="nav-item" onclick="showPBQ('pbq-cmd', this)">4. Command Line DNS</a>
+      <a class="nav-item" onclick="showPBQ('pbq-network', this)">5. DHCP Recovery</a>
+      <a class="nav-item" onclick="showPBQ('pbq-wifi', this)">6. 802.11 Standards</a>
+      <a class="nav-item" onclick="showPBQ('pbq-pcbuild', this)">7. Custom PC Builder</a>
+      <a class="nav-item" onclick="showPBQ('pbq-raid', this)">8. RAID Configurations</a>
+      <a class="nav-item" onclick="showPBQ('pbq-cloud', this)">9. Cloud Models (IaaS/PaaS)</a>
+      <a class="nav-item" onclick="showPBQ('pbq-mobo', this)">10. Motherboard Layout</a>
+    </div>
+  </nav>
+
+  <div id="main">
+    <div id="cover">
+      <div class="cover-badge">PRACTICE</div>
+      <h1 class="cover-title">Performance-Based <span>Questions</span></h1>
+      <p class="cover-sub">Test your practical knowledge with 10 interactive exam scenarios.</p>
+    </div>
+
+    <!-- PBQ 1: Ports -->
+    <div class="pbq-container active" id="pbq-ports">
+      <div class="section-header"><span class="section-num">PBQ 1</span><h2 class="section-title">Network Port Matching</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Drag the correct protocol to its corresponding default port number. This covers the majority of the common ports required for the A+ Core 1 exam.</div>
+      
+      <div class="drag-pool" style="margin-bottom: 24px;">
+        <div class="drag-pool-title">Protocols</div>
+        <div id="port-pool" class="pool-area" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="draggable" draggable="true" data-id="ftp">FTP</div>
+          <div class="draggable" draggable="true" data-id="ssh">SSH</div>
+          <div class="draggable" draggable="true" data-id="telnet">Telnet</div>
+          <div class="draggable" draggable="true" data-id="smtp">SMTP</div>
+          <div class="draggable" draggable="true" data-id="dns">DNS</div>
+          <div class="draggable" draggable="true" data-id="dhcp">DHCP</div>
+          <div class="draggable" draggable="true" data-id="http">HTTP</div>
+          <div class="draggable" draggable="true" data-id="pop3">POP3</div>
+          <div class="draggable" draggable="true" data-id="netbios">NetBIOS</div>
+          <div class="draggable" draggable="true" data-id="imap">IMAP</div>
+          <div class="draggable" draggable="true" data-id="snmp">SNMP</div>
+          <div class="draggable" draggable="true" data-id="ldap">LDAP</div>
+          <div class="draggable" draggable="true" data-id="slp">SLP</div>
+          <div class="draggable" draggable="true" data-id="https">HTTPS</div>
+          <div class="draggable" draggable="true" data-id="smb">SMB</div>
+          <div class="draggable" draggable="true" data-id="afp">AFP</div>
+          <div class="draggable" draggable="true" data-id="rdp">RDP</div>
+        </div>
+      </div>
+      
+      <div class="port-grid">
+        <div class="port-cell"><div class="drop-label">Port 20/21</div><div class="drop-zone" data-target="ftp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 22</div><div class="drop-zone" data-target="ssh"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 23</div><div class="drop-zone" data-target="telnet"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 25</div><div class="drop-zone" data-target="smtp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 53</div><div class="drop-zone" data-target="dns"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 67/68</div><div class="drop-zone" data-target="dhcp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 80</div><div class="drop-zone" data-target="http"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 110</div><div class="drop-zone" data-target="pop3"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 137-139</div><div class="drop-zone" data-target="netbios"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 143</div><div class="drop-zone" data-target="imap"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 161/162</div><div class="drop-zone" data-target="snmp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 389</div><div class="drop-zone" data-target="ldap"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 427</div><div class="drop-zone" data-target="slp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 443</div><div class="drop-zone" data-target="https"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 445</div><div class="drop-zone" data-target="smb"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 548</div><div class="drop-zone" data-target="afp"></div></div>
+        <div class="port-cell"><div class="drop-label">Port 3389</div><div class="drop-zone" data-target="rdp"></div></div>
+      </div>
+      
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('ports')">Check Answers</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('ports')">Reset</button>
+      </div>
+      <div id="feedback-ports" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 2: Cable -->
+    <div class="pbq-container" id="pbq-cable">
+      <div class="section-header"><span class="section-num">PBQ 2</span><h2 class="section-title">Cable Crimping & Types</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Drag the colored wires to correctly terminate both a T568A and T568B RJ-45 connector. Then, determine what type of cable is required for specific device connections.</div>
+      
+      <div class="drag-pool" style="margin-bottom: 24px;">
+        <div class="drag-pool-title">Wires & Cable Types</div>
+        <div id="cable-pool" class="pool-area" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <!-- Wires for A and B (16 total needed to fill both, or we can just supply enough in the pool) -->
+          <div class="draggable wire-o" draggable="true" data-id="orange">Orange</div>
+          <div class="draggable wire-o" draggable="true" data-id="orange">Orange</div>
+          <div class="draggable wire-ow" draggable="true" data-id="ow">White/Orange</div>
+          <div class="draggable wire-ow" draggable="true" data-id="ow">White/Orange</div>
+          <div class="draggable wire-g" draggable="true" data-id="green">Green</div>
+          <div class="draggable wire-g" draggable="true" data-id="green">Green</div>
+          <div class="draggable wire-gw" draggable="true" data-id="gw">White/Green</div>
+          <div class="draggable wire-gw" draggable="true" data-id="gw">White/Green</div>
+          <div class="draggable wire-b" draggable="true" data-id="blue">Blue</div>
+          <div class="draggable wire-b" draggable="true" data-id="blue">Blue</div>
+          <div class="draggable wire-bw" draggable="true" data-id="bw">White/Blue</div>
+          <div class="draggable wire-bw" draggable="true" data-id="bw">White/Blue</div>
+          <div class="draggable wire-br" draggable="true" data-id="brown">Brown</div>
+          <div class="draggable wire-br" draggable="true" data-id="brown">Brown</div>
+          <div class="draggable wire-brw" draggable="true" data-id="brw">White/Brown</div>
+          <div class="draggable wire-brw" draggable="true" data-id="brw">White/Brown</div>
+          <!-- Cable Types -->
+          <div class="draggable" draggable="true" data-id="cross" style="margin-left: 20px; border-left-color: #a855f7; color: #a855f7;">Crossover</div>
+          <div class="draggable" draggable="true" data-id="cross" style="border-left-color: #a855f7; color: #a855f7;">Crossover</div>
+          <div class="draggable" draggable="true" data-id="straight" style="border-left-color: #a855f7; color: #a855f7;">Straight-through</div>
+          <div class="draggable" draggable="true" data-id="straight" style="border-left-color: #a855f7; color: #a855f7;">Straight-through</div>
+        </div>
+      </div>
+      
+      <div class="drag-drop-grid two-col" style="gap: 16px;">
+        <div class="drop-zones">
+          <div class="drag-pool-title" style="color:#f97316">T568A Standard</div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 1</div><div class="drop-zone" data-target="gw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 2</div><div class="drop-zone" data-target="green"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 3</div><div class="drop-zone" data-target="ow"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 4</div><div class="drop-zone" data-target="blue"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 5</div><div class="drop-zone" data-target="bw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 6</div><div class="drop-zone" data-target="orange"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 7</div><div class="drop-zone" data-target="brw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 8</div><div class="drop-zone" data-target="brown"></div></div>
+        </div>
+        <div class="drop-zones">
+          <div class="drag-pool-title" style="color:#3b82f6">T568B Standard</div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 1</div><div class="drop-zone" data-target="ow"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 2</div><div class="drop-zone" data-target="orange"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 3</div><div class="drop-zone" data-target="gw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 4</div><div class="drop-zone" data-target="blue"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 5</div><div class="drop-zone" data-target="bw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 6</div><div class="drop-zone" data-target="green"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 7</div><div class="drop-zone" data-target="brw"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:50px">Pin 8</div><div class="drop-zone" data-target="brown"></div></div>
+        </div>
+      </div>
+      
+      <div class="drop-zones" style="margin-bottom: 24px;">
+        <div class="drag-pool-title">Cable Type Selection</div>
+        <div class="drop-row"><div class="drop-label" style="width:200px">PC to PC (MDI to MDI)</div><div class="drop-zone" data-target="cross"></div></div>
+        <div class="drop-row"><div class="drop-label" style="width:200px">Server to Server</div><div class="drop-zone" data-target="cross"></div></div>
+        <div class="drop-row"><div class="drop-label" style="width:200px">Printer to Switch</div><div class="drop-zone" data-target="straight"></div></div>
+        <div class="drop-row"><div class="drop-label" style="width:200px">PC to Wall Port</div><div class="drop-zone" data-target="straight"></div></div>
+      </div>
+      
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('cable')">Check Cable & Types</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('cable')">Reset</button>
+      </div>
+      <div id="feedback-cable" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 3: Printer -->
+    <div class="pbq-container" id="pbq-printer">
+      <div class="section-header"><span class="section-num">PBQ 3</span><h2 class="section-title">Laser Printer Troubleshooting</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Users are reporting various defects on their printouts from a network laser printer. Drag the failing internal component to the symptom it most likely causes.</div>
+      
+      <div class="drag-pool" style="margin-bottom: 24px;">
+        <div class="drag-pool-title">Components</div>
+        <div id="printer-pool" class="pool-area" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="draggable" draggable="true" data-id="fuser">Fuser Assembly</div>
+          <div class="draggable" draggable="true" data-id="drum">Imaging Drum</div>
+          <div class="draggable" draggable="true" data-id="toner">Toner Cartridge</div>
+          <div class="draggable" draggable="true" data-id="pickup">Pickup Rollers</div>
+        </div>
+      </div>
+      
+      <div class="printer-grid">
+        <div class="symptom-card">
+          <div class="img-placeholder">[ Add Smudged Print Image Here ]</div>
+          <div class="symptom-text">Toner easily rubs off the page</div>
+          <div class="drop-zone" data-target="fuser"></div>
+        </div>
+        <div class="symptom-card">
+          <div class="img-placeholder">[ Add Ghosting Image Here ]</div>
+          <div class="symptom-text">Ghost images of previous prints appear</div>
+          <div class="drop-zone" data-target="drum"></div>
+        </div>
+        <div class="symptom-card">
+          <div class="img-placeholder">[ Add Blank Page Image Here ]</div>
+          <div class="symptom-text">Pages are coming out completely blank</div>
+          <div class="drop-zone" data-target="toner"></div>
+        </div>
+        <div class="symptom-card">
+          <div class="img-placeholder">[ Add Paper Jam Image Here ]</div>
+          <div class="symptom-text">Paper frequently jams in the lower tray</div>
+          <div class="drop-zone" data-target="pickup"></div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('printer')">Check Answers</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('printer')">Reset</button>
+      </div>
+      <div id="feedback-printer" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 4: Command Line -->
+    <div class="pbq-container" id="pbq-cmd">
+      <div class="section-header"><span class="section-num">PBQ 4</span><h2 class="section-title">Command Line Troubleshooting</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> A user cannot reach an internal company website that was recently moved to a new IP address, but they can reach all other websites perfectly fine. Clear the local DNS cache to force the PC to resolve the new IP.</div>
+      <div class="terminal-window" onclick="document.getElementById('cmd-input').focus()">
+        <div>Microsoft Windows [Version 10.0.19045.3803]</div>
+        <div>(c) Microsoft Corporation. All rights reserved.</div><br>
+        <div>C:\Users\Admin&gt; <input type="text" id="cmd-input" class="terminal-input" autocomplete="off" spellcheck="false" onkeypress="if(event.key === 'Enter') checkAnswers('cmd')"></div>
+        <div id="cmd-output" class="terminal-output"></div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('cmd')">Execute Command</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('cmd-input').value = ''; document.getElementById('cmd-output').innerHTML = ''; document.getElementById('feedback-cmd').style.display = 'none';">Clear</button>
+      </div>
+      <div id="feedback-cmd" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 5: Network Config -->
+    <div class="pbq-container" id="pbq-network">
+      <div class="section-header"><span class="section-num">PBQ 5</span><h2 class="section-title">Network Adapter Configuration</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> This computer is experiencing an IP conflict because it was manually assigned `192.168.1.50` by a previous technician. Configure the adapter to automatically obtain <strong>both</strong> its IP address and DNS server address via DHCP.</div>
+      <div class="windows-mockup">
+        <div class="windows-title">Internet Protocol Version 4 (TCP/IPv4) Properties</div>
+        <div class="windows-radio-group">
+          <label><input type="radio" name="ip-type" id="ip-auto"> Obtain an IP address automatically</label>
+          <label><input type="radio" name="ip-type" id="ip-static" checked> Use the following IP address:</label>
+          <div style="padding-left:24px; color:#666; font-family: monospace; font-size: 13px;">
+            IP address: 192.168.1.50<br>
+            Subnet mask: 255.255.255.0
+          </div>
+        </div>
+        <div class="windows-radio-group">
+          <label><input type="radio" name="dns-type" id="dns-auto"> Obtain DNS server address automatically</label>
+          <label><input type="radio" name="dns-type" id="dns-static" checked> Use the following DNS server addresses:</label>
+          <div style="padding-left:24px; color:#666; font-family: monospace; font-size: 13px;">
+            Preferred DNS server: 8.8.8.8
+          </div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('network')">OK (Apply Settings)</button>
+      </div>
+      <div id="feedback-network" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 6: Wireless Standards -->
+    <div class="pbq-container" id="pbq-wifi">
+      <div class="section-header"><span class="section-num">PBQ 6</span><h2 class="section-title">802.11 Wireless Standards</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Match the 802.11 wireless standard to its correct frequency band and theoretical maximum throughput.</div>
+      <div class="drag-drop-grid two-col">
+        <div class="drag-pool">
+          <div class="drag-pool-title">Standards</div>
+          <div id="wifi-pool" class="pool-area" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="draggable" draggable="true" data-id="a">802.11a</div>
+            <div class="draggable" draggable="true" data-id="b">802.11b</div>
+            <div class="draggable" draggable="true" data-id="g">802.11g</div>
+            <div class="draggable" draggable="true" data-id="n">802.11n</div>
+            <div class="draggable" draggable="true" data-id="ac">802.11ac</div>
+            <div class="draggable" draggable="true" data-id="ax">802.11ax</div>
+          </div>
+        </div>
+        <div class="drop-zones">
+          <div class="drag-pool-title">Specifications</div>
+          <div class="drop-row"><div class="drop-label">5 GHz / 54 Mbps</div><div class="drop-zone" data-target="a"></div></div>
+          <div class="drop-row"><div class="drop-label">2.4 GHz / 11 Mbps</div><div class="drop-zone" data-target="b"></div></div>
+          <div class="drop-row"><div class="drop-label">2.4 GHz / 54 Mbps</div><div class="drop-zone" data-target="g"></div></div>
+          <div class="drop-row"><div class="drop-label">2.4 & 5 GHz / 600 Mbps</div><div class="drop-zone" data-target="n"></div></div>
+          <div class="drop-row"><div class="drop-label">5 GHz / ~7 Gbps</div><div class="drop-zone" data-target="ac"></div></div>
+          <div class="drop-row"><div class="drop-label">2.4 & 5 GHz / ~9.6 Gbps</div><div class="drop-zone" data-target="ax"></div></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('wifi')">Check Answers</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('wifi')">Reset</button>
+      </div>
+      <div id="feedback-wifi" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 7: Custom PC Build -->
+    <div class="pbq-container" id="pbq-pcbuild">
+      <div class="section-header"><span class="section-num">PBQ 7</span><h2 class="section-title">Custom PC Builder</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Select a client build request from the dropdown below. Then, drag the <strong>two</strong> most critical hardware characteristics for that specific build into the required slots.</div>
+      
+      <select class="scenario-select pbq-form select" id="pcbuild-select" onchange="loadPCBuildScenario()">
+        <option value="htpc">Client 1: Home Theater PC (HTPC)</option>
+        <option value="gaming">Client 2: High-End Gaming PC</option>
+        <option value="budget">Client 3: Budget Office / General PC</option>
+      </select>
+
+      <div class="drag-drop-grid two-col">
+        <div class="drag-pool">
+          <div class="drag-pool-title">Hardware Inventory</div>
+          <div id="pcbuild-pool" class="pool-area" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="draggable" draggable="true" data-id="htpc">Mini-ITX Form Factor</div>
+            <div class="draggable" draggable="true" data-id="htpc">Surround Sound Audio</div>
+            <div class="draggable" draggable="true" data-id="gaming">High-End Multi-Core CPU</div>
+            <div class="draggable" draggable="true" data-id="gaming">High-End Dedicated GPU</div>
+            <div class="draggable" draggable="true" data-id="budget">Integrated GPU (APU)</div>
+            <div class="draggable" draggable="true" data-id="budget">Standard Micro-ATX Board</div>
+            <div class="draggable" draggable="true" data-id="distractor1">Liquid Cooling Loop</div>
+            <div class="draggable" draggable="true" data-id="distractor2">Maximum RAM (128GB+)</div>
+          </div>
+        </div>
+        <div class="drop-zones">
+          <div class="drag-pool-title">Required Components</div>
+          <div class="drop-row"><div class="drop-label">Requirement 1</div><div class="drop-zone pcbuild-zone" data-target="htpc"></div></div>
+          <div class="drop-row"><div class="drop-label">Requirement 2</div><div class="drop-zone pcbuild-zone" data-target="htpc"></div></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('pcbuild')">Check Answers</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('pcbuild')">Reset</button>
+      </div>
+      <div id="feedback-pcbuild" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 8: RAID -->
+    <div class="pbq-container" id="pbq-raid">
+      <div class="section-header"><span class="section-num">PBQ 8</span><h2 class="section-title">RAID Configurations</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Select the correct RAID level and minimum required drives for each of the 5 client requirements.</div>
+      
+      <table class="raid-table pbq-form">
+        <thead>
+          <tr>
+            <th>Client Requirement</th>
+            <th>RAID Level</th>
+            <th>Min Drives</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Maximum speed, no fault tolerance needed.</td>
+            <td>
+              <select class="raid-level" data-answer="0">
+                <option value="">--</option><option value="0">RAID 0</option><option value="1">RAID 1</option><option value="5">RAID 5</option><option value="10">RAID 10</option>
+              </select>
+            </td>
+            <td><select class="raid-drives" data-answer="2"><option value="">--</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>
+          </tr>
+          <tr>
+            <td>Full data redundancy via mirroring, only 2 drives available.</td>
+            <td>
+              <select class="raid-level" data-answer="1">
+                <option value="">--</option><option value="0">RAID 0</option><option value="1">RAID 1</option><option value="5">RAID 5</option><option value="10">RAID 10</option>
+              </select>
+            </td>
+            <td><select class="raid-drives" data-answer="2"><option value="">--</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>
+          </tr>
+          <tr>
+            <td>Database server needing high read speeds and fault tolerance via parity.</td>
+            <td>
+              <select class="raid-level" data-answer="5">
+                <option value="">--</option><option value="0">RAID 0</option><option value="1">RAID 1</option><option value="5">RAID 5</option><option value="10">RAID 10</option>
+              </select>
+            </td>
+            <td><select class="raid-drives" data-answer="3"><option value="">--</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>
+          </tr>
+          <tr>
+            <td>Highest speed and fault tolerance (stripe of mirrors).</td>
+            <td>
+              <select class="raid-level" data-answer="10">
+                <option value="">--</option><option value="0">RAID 0</option><option value="1">RAID 1</option><option value="5">RAID 5</option><option value="10">RAID 10</option>
+              </select>
+            </td>
+            <td><select class="raid-drives" data-answer="4"><option value="">--</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('raid')">Check Answers</button>
+      </div>
+      <div id="feedback-raid" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 9: Cloud Models -->
+    <div class="pbq-container" id="pbq-cloud">
+      <div class="section-header"><span class="section-num">PBQ 9</span><h2 class="section-title">Cloud Computing Models</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> Match the correct cloud deployment model to its real-world usage scenario.</div>
+      <div class="drag-drop-grid two-col">
+        <div class="drag-pool">
+          <div class="drag-pool-title">Cloud Models</div>
+          <div id="cloud-pool" class="pool-area" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="draggable" draggable="true" data-id="saas">SaaS (Software)</div>
+            <div class="draggable" draggable="true" data-id="saas">SaaS (Software)</div>
+            <div class="draggable" draggable="true" data-id="paas">PaaS (Platform)</div>
+            <div class="draggable" draggable="true" data-id="iaas">IaaS (Infrastructure)</div>
+            <div class="draggable" draggable="true" data-id="daas">DaaS (Desktop)</div>
+          </div>
+        </div>
+        <div class="drop-zones">
+          <div class="drag-pool-title">Scenarios</div>
+          <div class="drop-row"><div class="drop-label" style="width:250px; text-align:left; font-size:14px; font-weight:400;">Company rents virtual machines and installs their own custom OS.</div><div class="drop-zone" data-target="iaas"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:250px; text-align:left; font-size:14px; font-weight:400;">Developers upload code to a provider who handles the runtime.</div><div class="drop-zone" data-target="paas"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:250px; text-align:left; font-size:14px; font-weight:400;">Users log into a web browser to check their company email.</div><div class="drop-zone" data-target="saas"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:250px; text-align:left; font-size:14px; font-weight:400;">Users access a full Windows 11 environment hosted in the cloud.</div><div class="drop-zone" data-target="daas"></div></div>
+          <div class="drop-row"><div class="drop-label" style="width:250px; text-align:left; font-size:14px; font-weight:400;">A subscription to a cloud-based CRM software like Salesforce.</div><div class="drop-zone" data-target="saas"></div></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="checkAnswers('cloud')">Check Answers</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('cloud')">Reset</button>
+      </div>
+      <div id="feedback-cloud" class="feedback-msg"></div>
+    </div>
+
+    <!-- PBQ 10: Motherboard -->
+    <div class="pbq-container" id="pbq-mobo">
+      <div class="section-header"><span class="section-num">PBQ 10</span><h2 class="section-title">Motherboard Layout Identification</h2></div>
+      <div class="pbq-desc"><strong>Scenario:</strong> You are building a new PC. Drag the component labels to their corresponding slots directly on the motherboard diagram.</div>
+      
+      <div class="drag-pool" style="margin-bottom: 24px;">
+        <div id="mobo-pool" class="pool-area" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="draggable" draggable="true" data-id="cpu">CPU Socket</div>
+          <div class="draggable" draggable="true" data-id="ram">RAM Slots (DIMM)</div>
+          <div class="draggable" draggable="true" data-id="pcie">PCIe x16 Slot</div>
+          <div class="draggable" draggable="true" data-id="sata">SATA Ports</div>
+          <div class="draggable" draggable="true" data-id="power">24-pin ATX Power</div>
+          <div class="draggable" draggable="true" data-id="m2">M.2 Slot</div>
+        </div>
+      </div>
+      
+      <div class="mobo-container">
+        <!-- SVG Motherboard Base -->
+        <svg viewBox="0 0 600 600" width="600" height="600">
+          <!-- PCB -->
+          <rect x="20" y="20" width="560" height="560" fill="#223322" stroke="#111" stroke-width="4" rx="10"/>
+          
+          <!-- IO Shield (Left) -->
+          <rect x="10" y="50" width="40" height="250" fill="#silver" stroke="#555" stroke-width="2"/>
+          <text x="30" y="175" fill="#333" font-size="14" font-family="monospace" text-anchor="middle" transform="rotate(-90 30,175)">I/O PANEL</text>
+          
+          <!-- Heatsinks -->
+          <rect x="70" y="60" width="50" height="180" fill="#444" rx="5"/>
+          <rect x="130" y="40" width="180" height="40" fill="#444" rx="5"/>
+          <circle cx="450" cy="450" r="40" fill="#333" stroke="#222" stroke-width="4"/> <!-- Chipset -->
+          
+          <!-- Outlines for reference (optional, drop zones cover them) -->
+          <rect x="180" y="100" width="120" height="120" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+          <rect x="360" y="50" width="80" height="240" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+          <rect x="70" y="300" width="300" height="20" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+          <rect x="520" y="150" width="30" height="120" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+          <rect x="520" y="450" width="40" height="60" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+          <rect x="100" y="380" width="120" height="20" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5,5"/>
+        </svg>
+
+        <!-- Drop Zones Overlay -->
+        <!-- CPU -->
+        <div class="drop-zone mobo-drop" data-target="cpu" style="top:100px; left:180px; width:120px; height:120px;"></div>
+        <!-- RAM -->
+        <div class="drop-zone mobo-drop" data-target="ram" style="top:50px; left:360px; width:80px; height:240px;"></div>
+        <!-- 24-pin Power -->
+        <div class="drop-zone mobo-drop" data-target="power" style="top:150px; left:520px; width:30px; height:120px;"></div>
+        <!-- PCIe x16 -->
+        <div class="drop-zone mobo-drop" data-target="pcie" style="top:300px; left:70px; width:300px; height:30px;"></div>
+        <!-- M.2 -->
+        <div class="drop-zone mobo-drop" data-target="m2" style="top:380px; left:100px; width:120px; height:20px;"></div>
+        <!-- SATA -->
+        <div class="drop-zone mobo-drop" data-target="sata" style="top:450px; left:520px; width:40px; height:60px;"></div>
+      </div>
+
+      <div class="action-bar" style="margin-top: 24px;">
+        <button class="btn btn-primary" onclick="checkAnswers('mobo')">Check Layout</button>
+        <button class="btn btn-secondary" onclick="resetAnswers('mobo')">Reset</button>
+      </div>
+      <div id="feedback-mobo" class="feedback-msg"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Tab Switching
+function showPBQ(id, element) {
+  document.querySelectorAll('.pbq-container').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById(id).classList.add('active');
+  element.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// Custom PC Build Scenario Loader
+function loadPCBuildScenario() {
+  const type = document.getElementById('pcbuild-select').value;
+  const zones = document.querySelectorAll('.pcbuild-zone');
+  
+  zones.forEach(zone => {
+    zone.setAttribute('data-target', type);
+    // Move any existing items back to pool
+    if (zone.children.length > 0) {
+      document.getElementById('pcbuild-pool').appendChild(zone.children[0]);
+    }
+    zone.classList.remove('correct', 'incorrect');
+  });
+  document.getElementById('feedback-pcbuild').style.display = 'none';
+}
+
+// Drag and Drop Logic
+let draggedItem = null;
+
+document.addEventListener('dragstart', (e) => {
+  if (e.target.classList.contains('draggable')) {
+    draggedItem = e.target;
+    setTimeout(() => e.target.classList.add('dragging'), 0);
+  }
+});
+
+document.addEventListener('dragend', (e) => {
+  if (e.target.classList.contains('draggable')) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.drop-zone, .mobo-drop').forEach(z => z.classList.remove('drag-over'));
+  }
+});
+
+document.querySelectorAll('.drop-zone, .mobo-drop, .pool-area').forEach(zone => {
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    if ((zone.classList.contains('drop-zone') || zone.classList.contains('mobo-drop')) && zone.children.length > 0 && draggedItem.parentElement !== zone) {
+        return;
+    }
+    if (zone.classList.contains('drop-zone') || zone.classList.contains('mobo-drop')) {
+        zone.classList.add('drag-over');
+    }
+  });
+  
+  zone.addEventListener('dragleave', e => {
+    zone.classList.remove('drag-over');
+  });
+  
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    
+    if ((zone.classList.contains('drop-zone') || zone.classList.contains('mobo-drop')) && zone.children.length > 0) {
+      const existing = zone.children[0];
+      const pbqContainer = zone.closest('.pbq-container');
+      const pool = pbqContainer.querySelector('.pool-area');
+      pool.appendChild(existing);
+    }
+    
+    if (draggedItem) {
+        zone.appendChild(draggedItem);
+        zone.classList.remove('correct', 'incorrect');
+        const pbqId = zone.closest('.pbq-container').id.split('-')[1];
+        document.getElementById('feedback-' + pbqId).style.display = 'none';
+    }
+  });
+});
+
+function checkAnswers(pbqType) {
+  const container = document.getElementById('pbq-' + pbqType);
+  const feedback = document.getElementById('feedback-' + pbqType);
+  
+  let allFilled = true;
+  let allCorrect = true;
+  
+  if (['ports', 'cable', 'printer', 'wifi', 'pcbuild', 'cloud', 'mobo'].includes(pbqType)) {
+      const zones = container.querySelectorAll('.drop-zone, .mobo-drop');
+      zones.forEach(zone => {
+        if (zone.children.length === 0) {
+          allFilled = false;
+        } else {
+          const targetId = zone.getAttribute('data-target');
+          const droppedId = zone.children[0].getAttribute('data-id');
+          
+          if (targetId === droppedId) {
+            zone.classList.remove('incorrect');
+            zone.classList.add('correct');
+          } else {
+            zone.classList.remove('correct');
+            zone.classList.add('incorrect');
+            allCorrect = false;
+          }
+        }
+      });
+  } else if (pbqType === 'cmd') {
+      const input = document.getElementById('cmd-input').value.trim().toLowerCase();
+      const output = document.getElementById('cmd-output');
+      if (input === '') {
+        allFilled = false;
+      } else if (input === 'ipconfig /flushdns') {
+        output.innerHTML = "<br>Windows IP Configuration<br><br>Successfully flushed the DNS Resolver Cache.<br><br>C:\\Users\\Admin&gt;";
+      } else {
+        output.innerHTML = "<br>'" + input + "' is not recognized as an internal or external command,<br>operable program or batch file.<br><br>C:\\Users\\Admin&gt;";
+        allCorrect = false;
+      }
+  } else if (pbqType === 'network') {
+      const ipAuto = document.getElementById('ip-auto').checked;
+      const dnsAuto = document.getElementById('dns-auto').checked;
+      if (!ipAuto || !dnsAuto) allCorrect = false;
+  } else if (pbqType === 'raid') {
+      const selects = container.querySelectorAll('select');
+      selects.forEach(sel => {
+        if (sel.value === '') {
+          allFilled = false;
+        } else if (sel.value !== sel.getAttribute('data-answer')) {
+          allCorrect = false;
+        }
+      });
+  }
+
+  feedback.style.display = 'block';
+  
+  if (!allFilled) {
+    feedback.className = 'feedback-msg feedback-error';
+    feedback.innerHTML = '<strong>Incomplete:</strong> Please provide an answer for all fields before checking.';
+  } else if (allCorrect) {
+    feedback.className = 'feedback-msg feedback-success';
+    feedback.innerHTML = '<strong>Perfect!</strong> You successfully completed this scenario.';
+  } else {
+    feedback.className = 'feedback-msg feedback-error';
+    feedback.innerHTML = '<strong>Incorrect:</strong> Review your answers and try again.';
+  }
+}
+
+function resetAnswers(pbqType) {
+  const container = document.getElementById('pbq-' + pbqType);
+  const feedback = document.getElementById('feedback-' + pbqType);
+  
+  if (['ports', 'cable', 'printer', 'wifi', 'pcbuild', 'cloud', 'mobo'].includes(pbqType)) {
+      const pool = container.querySelector('.pool-area');
+      const zones = container.querySelectorAll('.drop-zone, .mobo-drop');
+      
+      zones.forEach(zone => {
+        zone.classList.remove('correct', 'incorrect');
+        if (zone.children.length > 0) {
+          pool.appendChild(zone.children[0]);
+        }
+      });
+      
+      // Randomize pool order
+      if (pool) {
+          for (let i = pool.children.length; i >= 0; i--) {
+              pool.appendChild(pool.children[Math.random() * i | 0]);
+          }
+      }
+  }
+  
+  feedback.style.display = 'none';
+}
+
+window.onload = function() {
+    ['port-pool', 'cable-pool', 'printer-pool', 'wifi-pool', 'pcbuild-pool', 'cloud-pool', 'mobo-pool'].forEach(id => {
+        const pool = document.getElementById(id);
+        if (pool) {
+            for (let i = pool.children.length; i >= 0; i--) {
+                pool.appendChild(pool.children[Math.random() * i | 0]);
+            }
+        }
+    });
+};
+</script>
+</body>
+</html>
